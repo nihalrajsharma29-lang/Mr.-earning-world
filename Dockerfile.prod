@@ -1,0 +1,38 @@
+### Multi-stage Dockerfile for production (nginx + php-fpm)
+### Builds frontend assets, installs PHP dependencies, and runs nginx + php-fpm.
+
+FROM node:18 AS node-builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --silent
+COPY . .
+RUN npm run build --silent
+
+FROM composer:2 AS composer-installer
+WORKDIR /app
+COPY composer.* ./
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-progress
+
+FROM php:8.2-fpm-bullseye AS php-fpm
+RUN apt-get update && apt-get install -y \
+    libzip-dev zip unzip libpng-dev libonig-dev git curl nginx ca-certificates \
+    && docker-php-ext-install pdo pdo_mysql zip bcmath gd
+
+WORKDIR /var/www/html
+
+# Copy composer vendor and built public assets
+COPY --from=composer-installer /app/vendor ./vendor
+COPY --from=node-builder /app/public ./public
+
+# Copy rest of application
+COPY . /var/www/html
+
+# Nginx site config
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+EXPOSE 8080
+
+CMD ["sh", "-lc", "php-fpm -D && nginx -g 'daemon off;'"]
