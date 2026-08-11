@@ -39,7 +39,6 @@ RUN mkdir -p database storage/framework/cache storage/framework/sessions storage
 
 RUN php artisan package:discover --ansi
 
-RUN php artisan optimize:clear
 
 EXPOSE 8080
 
