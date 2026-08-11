@@ -1,17 +1,39 @@
-FROM composer:2 AS composer-installer
+FROM node:18 AS node-builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci --silent
+
+COPY . .
+RUN npm run build --silent
+
+
+FROM php:8.3-cli AS php-builder
 
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
+    unzip \
+    zip \
+    libzip-dev \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
-    libzip-dev \
     libonig-dev \
     libxml2-dev \
     libsqlite3-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd
+    && docker-php-ext-install \
+    gd \
+    mbstring \
+    zip \
+    xml \
+    pdo \
+    pdo_sqlite \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY composer.json composer.lock ./
 
@@ -23,27 +45,11 @@ RUN composer install \
     --no-progress
 
 
-FROM node:18 AS node-builder
-
-WORKDIR /app
-
-COPY package*.json ./
-
-RUN npm install
-
-COPY resources ./resources
-COPY public ./public
-COPY vite.config.js ./
-
-RUN npm run build
-
-
 FROM php:8.3-cli
 
 WORKDIR /var/www/html
 
 RUN apt-get update && apt-get install -y \
-    git \
     unzip \
     zip \
     libzip-dev \
@@ -53,19 +59,17 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libsqlite3-dev \
-    pkg-config \
-    sqlite3 \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
-    pdo \
-    pdo_sqlite \
+    gd \
     mbstring \
     zip \
     xml \
-    gd \
+    pdo \
+    pdo_sqlite \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=composer-installer /app/vendor ./vendor
+COPY --from=php-builder /app/vendor ./vendor
 
 COPY . .
 
