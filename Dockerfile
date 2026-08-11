@@ -11,8 +11,9 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libsqlite3-dev \
-    pkg-config \
-    sqlite3 \
+    curl \
+    nodejs \
+    npm \
     && docker-php-ext-install \
     pdo \
     pdo_sqlite \
@@ -24,7 +25,7 @@ RUN apt-get update && apt-get install -y \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-COPY . .
+COPY composer.json composer.lock ./
 
 RUN composer install \
     --no-dev \
@@ -33,14 +34,25 @@ RUN composer install \
     --prefer-dist \
     --no-scripts
 
-RUN mkdir -p database storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache \
+COPY package.json package-lock.json* ./
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+RUN mkdir -p database \
+    storage/framework/cache \
+    storage/framework/sessions \
+    storage/framework/views \
+    bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache \
     && if [ ! -f database/database.sqlite ]; then touch database/database.sqlite; fi
 
 RUN php artisan package:discover --ansi
 
 RUN php artisan migrate --force
-
 
 EXPOSE 8080
 
