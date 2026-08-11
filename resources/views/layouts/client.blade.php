@@ -15,18 +15,25 @@
             font-family: Arial, Helvetica, sans-serif;
             background: #f5f7fb;
             color: #1f2937;
+            overflow-x: hidden;
+        }
+
+        .app-shell {
+            display: flex;
+            min-height: 100vh;
         }
 
         .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
             width: 250px;
-            height: 100vh;
+            min-height: 100vh;
             background: #111827;
             color: white;
             padding: 20px 0;
             overflow-y: auto;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 20;
         }
 
         .logo {
@@ -88,22 +95,33 @@
         }
 
         .main {
-            margin-left: 250px;
+            flex: 1;
+            min-width: 0;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .topbar {
-            height: 70px;
+            min-height: 70px;
             background: white;
             border-bottom: 1px solid #e5e7eb;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 30px;
+            gap: 12px;
+            padding: 0 24px;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .topbar h2 {
             font-size: 20px;
+            margin: 0;
         }
 
         .profile {
@@ -124,8 +142,26 @@
             font-weight: bold;
         }
 
+        .mobile-menu-btn {
+            display: none;
+            border: 1px solid #e5e7eb;
+            background: white;
+            color: #111827;
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .sidebar-overlay {
+            display: none;
+        }
+
         .content {
-            padding: 30px;
+            padding: clamp(16px, 3vw, 30px);
+            flex: 1;
         }
 
         .content > *:first-child {
@@ -136,21 +172,46 @@
             .sidebar {
                 width: 210px;
             }
-
-            .main {
-                margin-left: 210px;
-            }
         }
 
         @media (max-width: 650px) {
-            .sidebar {
-                position: relative;
-                width: 100%;
-                height: auto;
+            .app-shell {
+                display: block;
             }
 
-            .main {
-                margin-left: 0;
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: min(86vw, 280px);
+                height: 100vh;
+                transform: translateX(-100%);
+                transition: transform 0.25s ease;
+                padding: 20px 0;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay {
+                display: block;
+                position: fixed;
+                inset: 0;
+                background: rgba(17, 24, 39, 0.55);
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.25s ease, visibility 0.25s ease;
+                z-index: 15;
+            }
+
+            .sidebar-overlay.open {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .mobile-menu-btn {
+                display: inline-flex;
             }
 
             .topbar {
@@ -160,69 +221,119 @@
             .content {
                 padding: 15px;
             }
+
+            .profile > div:last-child {
+                display: none;
+            }
         }
     </style>
 
     @stack('styles')
 </head>
 <body>
-    <aside class="sidebar">
-        <div class="logo">
-            Client <span>Portal</span>
-        </div>
-
-        <div class="menu">
-            <div class="menu-title">
-                Main Menu
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">
+                Client <span>Portal</span>
             </div>
 
-            <a href="{{ route('client.dashboard') }}" class="{{ request()->routeIs('client.dashboard') ? 'active' : '' }}">
-                📊 Data Dashboard
-            </a>
-
-            <a href="{{ route('client.hosts.create') }}" class="{{ request()->routeIs('client.hosts.create') ? 'active' : '' }}">
-                ➕ Add Host
-            </a>
-
-            <a href="{{ route('client.hosts.audit') }}" class="{{ request()->routeIs('client.hosts.audit') ? 'active' : '' }}">
-                🔍 Host Audit Results
-            </a>
-
-            <a href="{{ route('client.daily.reports') }}" class="{{ request()->routeIs('client.daily.reports') ? 'active' : '' }}">
-                📅 Daily Reports
-            </a>
-
-            <!-- Import Reports link removed for clients -->
-
-            <div class="menu-title">
-                Account
-            </div>
-
-            <form action="{{ route('logout') }}" method="POST" class="logout-form">
-                @csrf
-                <button type="submit" class="logout-btn">
-                    🚪 Logout
-                </button>
-            </form>
-        </div>
-    </aside>
-
-    <main class="main">
-        <div class="topbar">
-            <h2>@yield('page-heading', 'Client Dashboard')</h2>
-            <div class="profile">
-                <div class="profile-icon">
-                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+            <div class="menu">
+                <div class="menu-title">
+                    Main Menu
                 </div>
-                <div>
-                    <strong>{{ auth()->user()->name }}</strong>
+
+                <a href="{{ route('client.dashboard') }}" class="{{ request()->routeIs('client.dashboard') ? 'active' : '' }}">
+                    📊 Data Dashboard
+                </a>
+
+                <a href="{{ route('client.hosts.create') }}" class="{{ request()->routeIs('client.hosts.create') ? 'active' : '' }}">
+                    ➕ Add Host
+                </a>
+
+                <a href="{{ route('client.hosts.audit') }}" class="{{ request()->routeIs('client.hosts.audit') ? 'active' : '' }}">
+                    🔍 Host Audit Results
+                </a>
+
+                <a href="{{ route('client.daily.reports') }}" class="{{ request()->routeIs('client.daily.reports') ? 'active' : '' }}">
+                    📅 Daily Reports
+                </a>
+
+                <div class="menu-title">
+                    Account
+                </div>
+
+                <form action="{{ route('logout') }}" method="POST" class="logout-form">
+                    @csrf
+                    <button type="submit" class="logout-btn">
+                        🚪 Logout
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <main class="main">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Open menu">☰</button>
+                    <h2>@yield('page-heading', 'Client Dashboard')</h2>
+                </div>
+                <div class="profile">
+                    <div class="profile-icon">
+                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                    </div>
+                    <div>
+                        <strong>{{ auth()->user()->name }}</strong>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="content">
-            @yield('content')
-        </div>
-    </main>
+            <div class="content">
+                @yield('content')
+            </div>
+        </main>
+    </div>
+
+    @stack('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const btn = document.getElementById('mobileMenuBtn');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            if (!btn || !sidebar || !overlay) {
+                return;
+            }
+
+            const closeMenu = () => {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('open');
+                document.body.style.overflow = '';
+            };
+
+            btn.addEventListener('click', function () {
+                const isOpen = sidebar.classList.toggle('open');
+                overlay.classList.toggle('open', isOpen);
+                document.body.style.overflow = isOpen ? 'hidden' : '';
+            });
+
+            overlay.addEventListener('click', closeMenu);
+
+            document.querySelectorAll('.menu a, .logout-btn').forEach(function (item) {
+                item.addEventListener('click', function () {
+                    if (window.innerWidth <= 650) {
+                        closeMenu();
+                    }
+                });
+            });
+
+            window.addEventListener('resize', function () {
+                if (window.innerWidth > 650) {
+                    closeMenu();
+                }
+            });
+        });
+    </script>
 </body>
 </html>
