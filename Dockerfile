@@ -23,14 +23,17 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libsqlite3-dev \
+    libpq-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
-    gd \
-    mbstring \
-    zip \
-    xml \
-    pdo \
-    pdo_sqlite \
+        gd \
+        mbstring \
+        zip \
+        xml \
+        pdo \
+        pdo_sqlite \
+        pdo_pgsql \
+        pgsql \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -43,6 +46,7 @@ RUN composer install \
     --prefer-dist \
     --optimize-autoloader \
     --no-progress
+
 
 FROM php:8.3-cli
 
@@ -58,15 +62,19 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libsqlite3-dev \
+    libpq-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
-    gd \
-    mbstring \
-    zip \
-    xml \
-    pdo \
-    pdo_sqlite \
+        gd \
+        mbstring \
+        zip \
+        xml \
+        pdo \
+        pdo_sqlite \
+        pdo_pgsql \
+        pgsql \
     && rm -rf /var/lib/apt/lists/*
+
 
 COPY --from=php-builder /app/vendor ./vendor
 
@@ -74,19 +82,19 @@ COPY . .
 
 COPY --from=node-builder /app/public/build ./public/build
 
+
 RUN mkdir -p \
     database \
     storage/framework/cache \
     storage/framework/sessions \
     storage/framework/views \
     bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache \
-    && if [ ! -f database/database.sqlite ]; then touch database/database.sqlite; fi
+    && chmod -R 775 storage bootstrap/cache
+
 
 RUN php artisan package:discover --ansi
 
-RUN php artisan migrate --force && php artisan db:seed --force
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]
+CMD ["sh", "-c", "php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"]
