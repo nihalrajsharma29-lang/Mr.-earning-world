@@ -1,155 +1,306 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <title>{{ config('app.name', 'Client Portal') }}</title>
 
-        <!-- Fallback styles when Vite assets are not loaded -->
-        <style>
-            body {
-                margin: 0;
-                min-height: 100vh;
-                font-family: 'Figtree', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                background: #0f172a;
-                color: #e2e8f0;
-            }
-            .login-shell {
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 2rem 1rem;
-                background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
-            }
-            .login-card {
-                width: 100%;
-                max-width: 28rem;
-                background: rgba(15, 23, 42, 0.92);
-                border: 1px solid rgba(148, 163, 184, 0.16);
-                border-radius: 1.75rem;
-                box-shadow: 0 25px 80px rgba(15, 23, 42, 0.35);
-                overflow: hidden;
-            }
-            .login-card-inner {
-                padding: 2rem;
-            }
-            .login-header {
-                text-align: center;
-                padding: 2rem 1.5rem 1.25rem;
-                background: rgba(30, 41, 59, 0.98);
-            }
-            .login-header h2 {
-                margin: 0.75rem 0 0;
-                font-size: 2rem;
-                line-height: 1.1;
-                color: #f8fafc;
-            }
-            .login-header p {
-                margin: 0.75rem auto 0;
-                color: #cbd5e1;
-                font-size: 0.95rem;
-                max-width: 26rem;
-            }
-            .form-group {
-                margin-bottom: 1.25rem;
-            }
-            label {
-                display: block;
-                margin-bottom: 0.5rem;
-                font-weight: 600;
-                color: #e2e8f0;
-                font-size: 0.95rem;
-            }
-            input[type='email'], input[type='password'] {
-                width: 100%;
-                border-radius: 1rem;
-                border: 1px solid rgba(148, 163, 184, 0.35);
-                background: #0f172a;
-                color: #e2e8f0;
-                padding: 0.95rem 1rem;
-                font-size: 0.95rem;
-                outline: none;
-            }
-            input[type='email']::placeholder, input[type='password']::placeholder {
-                color: #94a3b8;
-            }
-            .text-muted {
-                color: #94a3b8;
-            }
-            .remember-row {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 0.75rem;
-                margin-bottom: 1.25rem;
-                font-size: 0.95rem;
-                color: #cbd5e1;
-            }
-            .remember-row label {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.5rem;
-                color: #cbd5e1;
-            }
-            .form-button {
-                width: 100%;
-                display: inline-flex;
-                justify-content: center;
-                padding: 0.95rem 1rem;
-                border-radius: 1rem;
-                border: none;
-                background: #6366f1;
-                color: #ffffff;
-                font-weight: 700;
-                font-size: 0.95rem;
-                cursor: pointer;
-            }
-            .form-button:hover {
-                background: #4f46e5;
-            }
-            .link-secondary {
-                color: #818cf8;
-                text-decoration: none;
-            }
-            .link-secondary:hover {
-                text-decoration: underline;
-            }
-            .status-message {
-                margin-bottom: 1rem;
-                padding: 1rem;
-                border-radius: 1rem;
-                background: #0f172a;
-                border: 1px solid rgba(16, 185, 129, 0.4);
-                color: #a7f3d0;
-            }
-            .error-text {
-                margin-top: 0.5rem;
-                color: #f87171;
-                font-size: 0.9rem;
-            }
-        </style>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="font-sans text-gray-900 antialiased login-shell">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-            <div>
-                <a href="/">
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
-                </a>
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .portal-login-shell {
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background:
+                radial-gradient(
+                    circle at 15% 20%,
+                    rgba(59, 130, 246, 0.20),
+                    transparent 32%
+                ),
+                radial-gradient(
+                    circle at 85% 80%,
+                    rgba(99, 102, 241, 0.20),
+                    transparent 32%
+                ),
+                linear-gradient(
+                    135deg,
+                    #020617 0%,
+                    #0f172a 50%,
+                    #111827 100%
+                );
+        }
+
+        .portal-login-container {
+            width: 100%;
+            max-width: 460px;
+        }
+
+        /* Dashboard logo + title */
+        .portal-brand {
+            text-align: center;
+            margin-bottom: 28px;
+            color: white;
+        }
+
+        .portal-brand-logo {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 18px;
+            background: white;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.30);
+        }
+
+        .portal-brand-logo img {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .portal-brand h1 {
+            margin: 0;
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        /* Login card */
+        .portal-login-card {
+            width: 100%;
+            overflow: hidden;
+            border-radius: 28px;
+            background: #ffffff;
+            box-shadow:
+                0 30px 80px rgba(0, 0, 0, 0.35),
+                0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .portal-card-header {
+            padding: 30px 34px 26px;
+            text-align: center;
+            background: linear-gradient(
+                135deg,
+                #111827,
+                #1e293b
+            );
+            color: white;
+        }
+
+        .portal-card-header .eyebrow {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+        }
+
+        .portal-card-header h2 {
+            margin: 9px 0 0;
+            font-size: 25px;
+            font-weight: 700;
+        }
+
+        .portal-card-header p {
+            margin: 8px 0 0;
+            color: #cbd5e1;
+            font-size: 13px;
+        }
+
+        .portal-card-body {
+            padding: 32px;
+        }
+
+        .portal-form-group {
+            margin-bottom: 22px;
+        }
+
+        .portal-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .portal-input {
+            width: 100%;
+            height: 50px;
+            padding: 0 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 14px;
+            background: #f8fafc;
+            color: #0f172a;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .portal-input:focus {
+            border-color: #6366f1;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+        }
+
+        .portal-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .portal-error {
+            margin-top: 7px;
+            color: #dc2626;
+            font-size: 12px;
+        }
+
+        .portal-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 4px 0 24px;
+        }
+
+        .portal-remember {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .portal-remember input {
+            width: 16px;
+            height: 16px;
+            accent-color: #4f46e5;
+        }
+
+        .portal-forgot {
+            color: #4f46e5;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .portal-forgot:hover {
+            color: #3730a3;
+            text-decoration: underline;
+        }
+
+        .portal-button {
+            width: 100%;
+            height: 52px;
+            border: 0;
+            border-radius: 14px;
+            background: linear-gradient(
+                135deg,
+                #4f46e5,
+                #6366f1
+            );
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.25);
+        }
+
+        .portal-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 30px rgba(79, 70, 229, 0.32);
+        }
+
+        .portal-help {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .portal-footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #64748b;
+            font-size: 11px;
+        }
+
+        @media (max-width: 640px) {
+            .portal-login-shell {
+                padding: 24px 14px;
+            }
+
+            .portal-brand h1 {
+                font-size: 25px;
+            }
+
+            .portal-card-body {
+                padding: 24px;
+            }
+
+            .portal-card-header {
+                padding: 25px 22px;
+            }
+
+            .portal-card-header h2 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="portal-login-shell">
+
+        <div class="portal-login-container">
+
+            <!-- Logo + Dashboard -->
+            <div class="portal-brand">
+
+                <div class="portal-brand-logo">
+                    <img
+                        src="https://www.clipartmax.com/png/middle/154-1541050_transparent-dashboard-logo-png.png"
+                        alt="Dashboard Logo"
+                    >
+                </div>
+
+                <h1>Dashboard</h1>
+
             </div>
 
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
-                {{ $slot }}
+            {{ $slot }}
+
+            <div class="portal-footer">
+                Secure portal access
             </div>
+
         </div>
-    </body>
+
+    </main>
+
+</body>
+
 </html>
