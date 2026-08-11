@@ -35,7 +35,7 @@ RUN apt-get update && apt-get install -y \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-COPY composer.json composer.lock ./
+COPY . .
 
 RUN composer install \
     --no-dev \
@@ -43,7 +43,6 @@ RUN composer install \
     --prefer-dist \
     --optimize-autoloader \
     --no-progress
-
 
 FROM php:8.3-cli
 
