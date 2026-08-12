@@ -532,11 +532,11 @@
             <div class="page-header">
 
                 <h1>
-                            {{ request('report_type', 'daily_report') === 'daily_report' ? '📅 Daily Reports' : (request('report_type') === 'payment_report' ? '💰 Payment Report' : (request('report_type') === 'payment_status' ? '💳 Payment Status' : '⚠️ Violation Records')) }}
+                            {{ request('report_type', 'daily_report') === 'daily_report' ? '📅 Daily Reports' : (request('report_type') === 'payment_report' ? '💰 Payment Report' : '⚠️ Violation Records') }}
                         </h1>
 
                         <p>
-                            {{ request('report_type', 'daily_report') === 'daily_report' ? 'Daily working performance of your hosts.' : (request('report_type') === 'payment_report' ? 'Payment report data for your hosts.' : (request('report_type') === 'payment_status' ? 'Payment status details for your hosts.' : 'Violation records for your hosts.')) }}
+                            {{ request('report_type', 'daily_report') === 'daily_report' ? 'Daily working performance of your hosts.' : (request('report_type') === 'payment_report' ? 'Payment report data for your hosts.' : 'Violation records for your hosts.') }}
 
 
             {{-- =========================

@@ -41,15 +41,9 @@ class DailyReportImportController extends BaseController
             'report_type' => [
                 'required',
                 'string',
-                'in:daily_report,payment_report,payment_status,violation_records',
+                'in:daily_report,payment_report,violation_records',
             ],
         ]);
-
-        if ($request->report_type === 'payment_status') {
-            return redirect()
-                ->route('admin.daily.import')
-                ->with('error', 'Payment Status import option will be opened very soon.');
-        }
 
         $fileName = $request->file('file')->getClientOriginalName();
         $requiredToken = $this->requiredFileNameToken($request->report_type);
@@ -148,7 +142,6 @@ class DailyReportImportController extends BaseController
             'daily_report' => '4280121896',
             'payment_report' => 'Payment Report',
             'violation_records' => 'Strike Records',
-            'payment_status' => 'Payment Status',
             default => null,
         };
     }

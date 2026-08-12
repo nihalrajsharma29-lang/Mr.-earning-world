@@ -74,10 +74,10 @@
                 <a href="{{ route('admin.daily.import') }}" class="{{ request()->routeIs('admin.daily.import*') ? 'active' : '' }}">� Import Reports</a>
                 <a href="{{ route('admin.reports', ['report_type' => 'daily_report']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type', 'daily_report') === 'daily_report' ? 'active' : '' }}">📅 Daily Report</a>
                 <a href="{{ route('admin.reports', ['report_type' => 'payment_report']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type') === 'payment_report' ? 'active' : '' }}">💰 Payment Report</a>
-                <span class="menu-disabled" title="Payment Status will be available soon.">💳 Payment Status (Coming Soon)</span>
                 <a href="{{ route('admin.reports', ['report_type' => 'violation_records']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type') === 'violation_records' ? 'active' : '' }}">⚠️ Violation Records</a>
                 <a href="{{ route('admin.audit') }}" class="{{ request()->routeIs('admin.audit') ? 'active' : '' }}">📝 Audit Log</a>
                 <a href="{{ route('admin.hosts.index') }}" class="{{ request()->routeIs('admin.hosts.*') ? 'active' : '' }}">✅ Hosts</a>
+                <a href="{{ route('admin.bank-details') }}" class="{{ request()->routeIs('admin.bank-details') ? 'active' : '' }}">💳 Bank Details</a>
                 <div class="menu-title">Account</div>
                 <form method="POST" action="{{ route('logout') }}" class="logout-form">
                     @csrf

@@ -36,12 +36,6 @@ class DailyReportController extends BaseController
 
         $reportType = $request->input('report_type', 'daily_report');
 
-        if ($reportType === 'payment_status') {
-            return redirect()
-                ->route('client.daily.reports', ['report_type' => 'daily_report'])
-                ->with('error', 'Payment Status option will be opened very soon.');
-        }
-
         $query = DailyReport::with(['customer', 'client'])
             ->where('client_id', $client->id)
             ->where('report_type', $reportType);

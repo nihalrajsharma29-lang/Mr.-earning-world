@@ -752,7 +752,6 @@ class DailyReportImport implements
 
         return match ($reportType) {
             'payment_report',
-            'payment_status',
             'violation_records' => $reportType,
             default => 'daily_report',
         };

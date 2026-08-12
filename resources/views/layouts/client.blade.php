@@ -270,10 +270,6 @@
                     💰 Payment Report
                 </a>
 
-                <span class="menu-disabled" title="Payment Status will be available soon.">
-                    💳 Payment Status (Coming Soon)
-                </span>
-
                 <a href="{{ route('client.daily.reports', ['report_type' => 'violation_records']) }}" class="{{ request()->routeIs('client.daily.reports') && request('report_type') === 'violation_records' ? 'active' : '' }}">
                     ⚠️ Violation Records
                 </a>
@@ -281,6 +277,10 @@
                 <div class="menu-title">
                     Account
                 </div>
+
+                <a href="{{ route('client.bank-card') }}" class="{{ request()->routeIs('client.bank-card') ? 'active' : '' }}">
+                    💳 Bank Card
+                </a>
 
                 <form action="{{ route('logout') }}" method="POST" class="logout-form">
                     @csrf

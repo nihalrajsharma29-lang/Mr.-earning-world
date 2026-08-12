@@ -17,6 +17,11 @@ class Client extends Model
         'address',
         'status',
         'user_id',
+        'bank_account_number',
+        'bank_account_holder_name',
+        'bank_ifsc_code',
+        'bank_name',
+        'bank_address',
     ];
 
     /**

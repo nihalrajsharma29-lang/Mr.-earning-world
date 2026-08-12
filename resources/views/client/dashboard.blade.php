@@ -280,12 +280,6 @@
                     <div class="action-description">Open host payment report data.</div>
                 </a>
 
-                <a href="{{ route('client.daily.reports', ['report_type' => 'payment_status']) }}" class="action">
-                    <div class="action-icon">💳</div>
-                    <div class="action-title">Payment Status</div>
-                    <div class="action-description">Check payment status entries.</div>
-                </a>
-
                 <a href="{{ route('client.daily.reports', ['report_type' => 'violation_records']) }}" class="action">
                     <div class="action-icon">⚠️</div>
                     <div class="action-title">Violation Records</div>

@@ -25,6 +25,7 @@ use App\Http\Controllers\Client\DashboardController as ClientDashboardController
 use App\Http\Controllers\Client\DailyReportImportController as ClientDailyReportImportController;
 use App\Http\Controllers\Client\HostAuditController;
 use App\Http\Controllers\Client\DailyReportController;
+use App\Http\Controllers\Client\BankCardController;
 
 use App\Models\DailyReport;
 use Illuminate\Support\Facades\Route;
@@ -243,6 +244,32 @@ Route::middleware('auth')->group(function () {
         [HostAuditController::class, 'index']
     )->name('client.hosts.audit');
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | CLIENT - BANK CARD
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/client/bank-card',
+        [BankCardController::class, 'index']
+    )->name('client.bank-card');
+
+    Route::post(
+        '/client/bank-card',
+        [BankCardController::class, 'store']
+    )->name('client.bank-card.store');
+
+    Route::delete(
+        '/admin/bank-details/{client}',
+        [\App\Http\Controllers\Admin\BankDetailsController::class, 'destroy']
+    )->name('admin.bank-details.destroy');
+
+    Route::get(
+        '/admin/bank-details',
+        [\App\Http\Controllers\Admin\BankDetailsController::class, 'index']
+    )->name('admin.bank-details');
 
     /*
     |--------------------------------------------------------------------------

@@ -18,12 +18,6 @@ class DailyReportController extends BaseController
     {
         $reportType = $request->input('report_type', 'daily_report');
 
-        if ($reportType === 'payment_status') {
-            return redirect()
-                ->route('admin.reports', ['report_type' => 'daily_report'])
-                ->with('error', 'Payment Status option will be opened very soon.');
-        }
-
         $query = DailyReport::with(['customer', 'client'])
             ->where('report_type', $reportType);
 
@@ -125,7 +119,7 @@ class DailyReportController extends BaseController
     {
         $request->validate([
             'date' => 'required|date',
-            'report_type' => 'nullable|string|in:daily_report,payment_report,payment_status,violation_records',
+            'report_type' => 'nullable|string|in:daily_report,payment_report,violation_records',
         ]);
 
         $date = $request->date;
@@ -155,7 +149,7 @@ class DailyReportController extends BaseController
         $validated = $request->validate([
             'report_ids' => 'required|array|min:1',
             'report_ids.*' => 'integer|exists:daily_reports,id',
-            'report_type' => 'nullable|string|in:daily_report,payment_report,payment_status,violation_records',
+            'report_type' => 'nullable|string|in:daily_report,payment_report,violation_records',
         ]);
 
         $reportType = $validated['report_type'] ?? 'payment_report';
