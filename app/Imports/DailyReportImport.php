@@ -111,33 +111,26 @@ class DailyReportImport implements
         |--------------------------------------------------------------------------
         */
 
-        // Try to find existing customer first
-        $customer = Customer::where('customer_id', $hostId)->first();
+        // Try to find existing customer first.
+        // For client imports, host must belong to the same client dashboard.
+        $customerQuery = Customer::query()->where('customer_id', $hostId);
+
+        if ($this->clientId) {
+            $customerQuery->where('client_id', $this->clientId);
+        }
+
+        $customer = $customerQuery->first();
         $detectedClientId = $this->resolveClientId($row);
 
         if (! $detectedClientId && $this->clientId) {
             $detectedClientId = $this->clientId;
         }
 
-        if (! $customer && in_array($this->reportType, ['payment_report', 'violation_records'], true)) {
+        // Do not auto-create hosts during report import.
+        // Only pre-existing host IDs are allowed for all report types.
+        if (! $customer) {
             $this->skippedUnknownHostRows++;
             return $this->markSkipped();
-        }
-
-        if (! $customer) {
-            if (! $detectedClientId) {
-                return $this->markSkipped(); // Cannot import a host without a known client.
-            }
-
-            $customer = Customer::create([
-                'customer_id' => $hostId,
-                'client_id' => $detectedClientId,
-                'name' => $this->value($row, 'username') ?? $hostId,
-                'username' => $this->value($row, 'username') ?? $hostId,
-                'category' => $this->value($row, ['category', 'categories']),
-                'status' => 'Active',
-                'approval_status' => 'approved',
-            ]);
         }
 
 

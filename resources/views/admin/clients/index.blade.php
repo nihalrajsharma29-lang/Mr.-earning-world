@@ -182,8 +182,4 @@
         </tbody>
 
     </table>
-<div class="p-4">
-    {{ $clients->links() }}
-</div>
-
 @endsection

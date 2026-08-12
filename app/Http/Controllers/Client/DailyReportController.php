@@ -137,8 +137,7 @@ class DailyReportController extends BaseController
 
         $reports = $query
             ->latest('dt')
-            ->paginate(20)
-            ->withQueryString();
+            ->get();
 
         /*
         |--------------------------------------------------------------------------

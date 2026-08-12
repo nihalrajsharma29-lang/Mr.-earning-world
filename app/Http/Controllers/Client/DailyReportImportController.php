@@ -44,18 +44,30 @@ class DailyReportImportController extends BaseController
 
         try {
 
+            $import = new DailyReportImport(
+                auth()->user()->client?->id
+            );
+
             Excel::import(
-                new DailyReportImport(
-                    auth()->user()->client?->id
-                ),
+                $import,
                 $request->file('file')
             );
+
+            $imported = $import->getImportedRows();
+            $skipped = $import->getSkippedRows();
+            $skippedUnknownHost = $import->getSkippedUnknownHostRows();
+
+            $message = "Daily Reports imported. Imported: {$imported}, Skipped: {$skipped}.";
+
+            if ($skippedUnknownHost > 0) {
+                $message .= " Unknown host IDs skipped: {$skippedUnknownHost}.";
+            }
 
             return redirect()
                 ->route('client.daily.import')
                 ->with(
                     'success',
-                    'Daily Reports imported successfully.'
+                    $message
                 );
 
         } catch (\Throwable $e) {

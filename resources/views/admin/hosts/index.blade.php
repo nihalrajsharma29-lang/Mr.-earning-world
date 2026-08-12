@@ -27,6 +27,12 @@
     .reject-form input { min-width: 180px; padding: 10px; border: 1px solid #d1d5db; border-radius: 10px; }
     .empty { padding: 50px 20px; text-align: center; color: #6b7280; }
     .empty-icon { font-size: 40px; margin-bottom: 14px; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; align-items: center; }
+    .toolbar form { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .bulk-actions { display: flex; gap: 8px; align-items: center; }
+    .actions-inline { display: flex; flex-wrap: nowrap; gap: 8px; align-items: center; }
+    .actions-inline form { margin: 0; }
+    .table-checkbox { width: 16px; height: 16px; cursor: pointer; }
     @media (max-width: 840px) { .table-wrapper { min-width: 760px; } }
 </style>
 @endpush
@@ -51,8 +57,8 @@
                 </div>
             @endif
 
-            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; align-items: center;">
-                <form method="GET" action="{{ route('admin.hosts.index') }}" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+            <div class="toolbar">
+                <form method="GET" action="{{ route('admin.hosts.index') }}">
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <label for="search" style="font-weight: 700; color: #374151;">Search</label>
                         <input id="search" name="search" value="{{ request('search') }}" placeholder="Host ID, client, name" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 10px; min-width: 260px;">
@@ -68,6 +74,23 @@
                     </div>
                     <button type="submit" class="btn btn-approve" style="background: #2563eb;">Filter</button>
                 </form>
+
+                <div class="bulk-actions">
+                    <button type="button" id="approve-selected-btn" class="btn btn-approve">Approved</button>
+                    <button type="button" id="delete-selected-btn" class="btn btn-reject" style="background: #7f1d1d;">Delete</button>
+                </div>
+
+                <form id="bulk-approve-form" action="{{ route('admin.hosts.approve.selected') }}" method="POST" style="display: none;">
+                    @csrf
+                    @method('PATCH')
+                    <div id="bulk-approve-inputs"></div>
+                </form>
+
+                <form id="bulk-delete-form" action="{{ route('admin.hosts.destroy.selected') }}" method="POST" style="display: none;">
+                    @csrf
+                    @method('DELETE')
+                    <div id="bulk-delete-inputs"></div>
+                </form>
             </div>
 
             @if($hosts->count() > 0)
@@ -75,7 +98,9 @@
                     <table>
                         <thead>
                             <tr>
+                                <th><input type="checkbox" id="select-all-hosts" class="table-checkbox"></th>
                                 <th>#</th>
+                                <th>Host ID</th>
                                 <th>Host</th>
                                 <th>Client</th>
                                 <th>Country</th>
@@ -88,7 +113,11 @@
                         <tbody>
                             @foreach($hosts as $host)
                                 <tr>
+                                    <td>
+                                        <input type="checkbox" class="host-select-checkbox table-checkbox" value="{{ $host->id }}">
+                                    </td>
                                     <td>{{ $loop->iteration }}</td>
+                                    <td><strong>{{ $host->customer_id ?? '-' }}</strong></td>
                                     <td><strong>{{ $host->name ?? $host->customer_id ?? '-' }}</strong></td>
                                     <td>{{ $host->client->name ?? 'N/A' }}</td>
                                     <td>{{ $host->country ?? '-' }}</td>
@@ -104,38 +133,28 @@
                                     </td>
                                     <td>{{ $host->rejection_reason ?: '-' }}</td>
                                     <td>
-                                        <div class="actions">
-                                            @if($host->approval_status === 'pending')
-                                                <form action="{{ route('admin.hosts.approve', $host) }}" method="POST">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <button type="submit" class="btn btn-approve" onclick="return confirm('Approve this host?')">Approve</button>
-                                                </form>
-                                                <form action="{{ route('admin.hosts.reject', $host) }}" method="POST" class="reject-form">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <input type="text" name="rejection_reason" placeholder="Rejection reason">
-                                                    <button type="submit" class="btn btn-reject" onclick="return confirm('Reject this host?')">Reject</button>
-                                                </form>
-                                            @else
+                                        <div class="actions-inline">
+                                            @if($host->approval_status !== 'pending')
                                                 <span class="badge {{ $host->approval_status === 'approved' ? 'badge-approved' : 'badge-rejected' }}">No action required</span>
                                             @endif
+
+                                            <form action="{{ route('admin.hosts.reassign', $host) }}" method="POST" style="display: flex; gap: 8px; align-items: center;">
+                                                @csrf
+                                                @method('PATCH')
+                                                <select name="client_id" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 10px; min-width: 170px;">
+                                                    @foreach($clients as $clientOption)
+                                                        <option value="{{ $clientOption->id }}" {{ $clientOption->id === $host->client_id ? 'selected' : '' }}>{{ $clientOption->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <button type="submit" class="btn btn-approve" style="background: #0f766e;">Reassign</button>
+                                            </form>
+
+                                            <form action="{{ route('admin.hosts.destroy', $host) }}" method="POST">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-reject" style="background: #7f1d1d;" onclick="return confirm('Delete this host?')">Delete</button>
+                                            </form>
                                         </div>
-                                        <form action="{{ route('admin.hosts.reassign', $host) }}" method="POST" style="margin-top: 10px; display: flex; gap: 8px; align-items: center;">
-                                            @csrf
-                                            @method('PATCH')
-                                            <select name="client_id" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 10px; min-width: 170px;">
-                                                @foreach($clients as $clientOption)
-                                                    <option value="{{ $clientOption->id }}" {{ $clientOption->id === $host->client_id ? 'selected' : '' }}>{{ $clientOption->name }}</option>
-                                                @endforeach
-                                            </select>
-                                            <button type="submit" class="btn btn-approve" style="background: #0f766e;">Reassign</button>
-                                        </form>
-                                        <form action="{{ route('admin.hosts.destroy', $host) }}" method="POST" style="margin-top: 10px;">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-reject" style="background: #7f1d1d;">Delete</button>
-                                        </form>
                                     </td>
                                 </tr>
                             @endforeach
@@ -152,3 +171,87 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    const selectAllHosts = document.getElementById('select-all-hosts');
+    const hostCheckboxes = document.querySelectorAll('.host-select-checkbox');
+    const approveSelectedBtn = document.getElementById('approve-selected-btn');
+    const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+    const bulkApproveInputs = document.getElementById('bulk-approve-inputs');
+    const bulkDeleteInputs = document.getElementById('bulk-delete-inputs');
+    const bulkApproveForm = document.getElementById('bulk-approve-form');
+    const bulkDeleteForm = document.getElementById('bulk-delete-form');
+
+    function getSelectedHostIds() {
+        return Array.from(hostCheckboxes)
+            .filter(function (checkbox) { return checkbox.checked; })
+            .map(function (checkbox) { return checkbox.value; });
+    }
+
+    function fillHiddenInputs(container, ids) {
+        if (!container) {
+            return;
+        }
+
+        container.innerHTML = '';
+        ids.forEach(function (id) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'host_ids[]';
+            input.value = id;
+            container.appendChild(input);
+        });
+    }
+
+    selectAllHosts?.addEventListener('change', function () {
+        hostCheckboxes.forEach(function (checkbox) {
+            checkbox.checked = selectAllHosts.checked;
+        });
+    });
+
+    hostCheckboxes.forEach(function (checkbox) {
+        checkbox.addEventListener('change', function () {
+            const selectedCount = Array.from(hostCheckboxes).filter(function (cb) {
+                return cb.checked;
+            }).length;
+
+            if (selectAllHosts) {
+                selectAllHosts.checked = selectedCount === hostCheckboxes.length && hostCheckboxes.length > 0;
+            }
+        });
+    });
+
+    approveSelectedBtn?.addEventListener('click', function () {
+        const selectedIds = getSelectedHostIds();
+
+        if (selectedIds.length === 0) {
+            alert('Please select at least one host.');
+            return;
+        }
+
+        if (!confirm('Approve selected hosts?')) {
+            return;
+        }
+
+        fillHiddenInputs(bulkApproveInputs, selectedIds);
+        bulkApproveForm?.submit();
+    });
+
+    deleteSelectedBtn?.addEventListener('click', function () {
+        const selectedIds = getSelectedHostIds();
+
+        if (selectedIds.length === 0) {
+            alert('Please select at least one host.');
+            return;
+        }
+
+        if (!confirm('Delete selected hosts? This action cannot be undone.')) {
+            return;
+        }
+
+        fillHiddenInputs(bulkDeleteInputs, selectedIds);
+        bulkDeleteForm?.submit();
+    });
+</script>
+@endpush

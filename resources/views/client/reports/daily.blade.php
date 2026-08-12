@@ -768,7 +768,7 @@
                                     <tr>
 
                                         <td>
-                                            {{ $reports->firstItem() + $loop->index }}
+                                            {{ $loop->iteration }}
                                         </td>
 
                                         <td>
@@ -989,16 +989,6 @@
                         </table>
 
                     </div>
-
-
-                    {{-- PAGINATION --}}
-
-                    <div class="pagination">
-
-                        {{ $reports->withQueryString()->links() }}
-
-                    </div>
-
                 @else
 
                     <div class="empty">

@@ -67,9 +67,6 @@
     .status-yes { background: #dcfce7; color: #166534; }
     .status-no { background: #fee2e2; color: #991b1b; }
 
-    .pagination { padding: 20px; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
-    .pagination a { padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 10px; color: #111827; text-decoration: none; }
-    .pagination .active { background: #2563eb; color: white; border-color: #2563eb; }
 
     .empty { padding: 60px 20px; text-align: center; color: #6b7280; }
     .empty-icon { font-size: 42px; margin-bottom: 16px; }
@@ -116,7 +113,7 @@
                 @if($isPaymentReport)
                     ${{ number_format($paymentSummary['total_host_salary'] ?? 0, 2) }}
                 @else
-                    {{ $reports->total() }}
+                    {{ $reports->count() }}
                 @endif
             </div>
         </div>
@@ -300,7 +297,7 @@
                         <tbody>
                             @foreach($reports as $report)
                                 <tr>
-                                    <td>{{ $reports->firstItem() + $loop->index }}</td>
+                                    <td>{{ $loop->iteration }}</td>
                                     <td>{{ $report->dt?->format('d M Y') ?? '-' }}</td>
                                     <td><strong>{{ $report->host_id ?? '-' }}</strong></td>
                                     <td>{{ $report->user_name ?? ($report->customer?->name ?? '-') }}</td>
@@ -338,9 +335,6 @@
                 @endif
             </div>
 
-            <div class="pagination">
-                {{ $reports->withQueryString()->links() }}
-            </div>
         @else
             <div class="empty">
                 <div class="empty-icon">📭</div>

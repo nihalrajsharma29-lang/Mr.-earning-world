@@ -47,11 +47,32 @@ class HostApprovalController extends BaseController
     {
         $customer->update([
             'approval_status' => 'approved',
+            'rejection_reason' => null,
         ]);
 
         return redirect()
             ->route('admin.hosts.index')
             ->with('success', 'Host approved successfully.');
+    }
+
+    /**
+     * Approve selected hosts in one action.
+     */
+    public function approveSelected(Request $request)
+    {
+        $validated = $request->validate([
+            'host_ids' => 'required|array|min:1',
+            'host_ids.*' => 'integer|exists:customers,id',
+        ]);
+
+        $updated = Customer::query()
+            ->whereIn('id', $validated['host_ids'])
+            ->update([
+                'approval_status' => 'approved',
+                'rejection_reason' => null,
+            ]);
+
+        return back()->with('success', "{$updated} host(s) approved successfully.");
     }
 
     /**
@@ -82,6 +103,23 @@ class HostApprovalController extends BaseController
         return redirect()
             ->route('admin.hosts.index')
             ->with('success', 'Host deleted successfully.');
+    }
+
+    /**
+     * Delete selected hosts in one action.
+     */
+    public function destroySelected(Request $request)
+    {
+        $validated = $request->validate([
+            'host_ids' => 'required|array|min:1',
+            'host_ids.*' => 'integer|exists:customers,id',
+        ]);
+
+        $deleted = Customer::query()
+            ->whereIn('id', $validated['host_ids'])
+            ->delete();
+
+        return back()->with('success', "{$deleted} host(s) deleted successfully.");
     }
 
     /**

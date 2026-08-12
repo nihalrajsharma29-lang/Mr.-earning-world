@@ -93,18 +93,9 @@ class DailyReportController extends BaseController
             ];
         }
 
-        if ($reportType === 'payment_report') {
-            $totalRows = (int) (clone $query)->count();
-            $perPage = max($totalRows, 1);
-
-            $reports = $query
-                ->paginate($perPage)
-                ->withQueryString();
-        } else {
-            $reports = $query
-                ->paginate(50)
-                ->withQueryString();
-        }
+        $reports = $query
+            ->latest('dt')
+            ->get();
 
         $paymentReportColumns = $reportType === 'payment_report'
             ? PaymentReportColumns::definitions()

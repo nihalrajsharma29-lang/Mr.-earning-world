@@ -36,7 +36,6 @@
     .badge-pending { background: #fef3c7; color: #92400e; }
     .badge-rejected { background: #fee2e2; color: #991b1b; }
     .empty { padding: 48px; text-align: center; color: #6b7280; }
-    .pagination { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; padding-top: 18px; }
     @media (max-width: 960px) { .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filter-form { grid-template-columns: 1fr; } }
     @media (max-width: 660px) { .summary-grid { grid-template-columns: 1fr; } }
 </style>
@@ -58,7 +57,7 @@
                 @if($isPaymentReport)
                     ${{ number_format($paymentSummary['total_host_final_rewards'] ?? 0, 2) }}
                 @else
-                    {{ $reports->total() }}
+                    {{ $reports->count() }}
                 @endif
             </div>
         </div>
@@ -278,7 +277,7 @@
                                                 value="{{ $report->id }}"
                                             >
                                         </td>
-                                        <td>{{ $reports->firstItem() + $loop->index }}</td>
+                                        <td>{{ $loop->iteration }}</td>
                                         <td>{{ $report->dt?->format('d M Y') ?? '-' }}</td>
                                         <td><strong>{{ $report->host_id ?? '-' }}</strong></td>
                                         <td>{{ $report->client?->name ?? '-' }} / {{ $report->client_id }}</td>
@@ -316,9 +315,6 @@
                         </table>
                     @endif
                 </div>
-                @unless($isPaymentReport)
-                    <div class="pagination">{{ $reports->withQueryString()->links() }}</div>
-                @endunless
             @else
                 <div class="empty">
                     <div class="empty-icon">📭</div>

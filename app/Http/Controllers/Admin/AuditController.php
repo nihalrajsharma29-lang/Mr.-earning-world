@@ -24,7 +24,7 @@ class AuditController extends BaseController
             $query->where('client_id', $request->client_id);
         }
 
-        $logs = $query->latest()->paginate(25)->withQueryString();
+        $logs = $query->latest()->get();
 
         return view('admin.audit.index', compact('logs'));
     }

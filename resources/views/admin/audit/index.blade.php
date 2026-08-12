@@ -41,10 +41,6 @@
             </tbody>
         </table>
     </div>
-
-    <div class="p-4">
-        {{ $logs->withQueryString()->links() }}
-    </div>
 </div>
 
 @endsection

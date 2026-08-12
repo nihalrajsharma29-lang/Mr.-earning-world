@@ -30,8 +30,7 @@ class ClientController extends BaseController
 
         })
         ->latest()
-        ->paginate(10)
-        ->withQueryString();
+        ->get();
 
     return view('admin.clients.index', compact('clients', 'search'));
 }

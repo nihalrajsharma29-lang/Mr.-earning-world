@@ -173,6 +173,16 @@ Route::middleware('auth')->group(function () {
     )->name('admin.hosts.index');
 
     Route::patch(
+        '/admin/hosts/selected/approve',
+        [HostApprovalController::class, 'approveSelected']
+    )->name('admin.hosts.approve.selected');
+
+    Route::delete(
+        '/admin/hosts/selected',
+        [HostApprovalController::class, 'destroySelected']
+    )->name('admin.hosts.destroy.selected');
+
+    Route::patch(
         '/admin/hosts/{customer}/approve',
         [HostApprovalController::class, 'approve']
     )->name('admin.hosts.approve');
