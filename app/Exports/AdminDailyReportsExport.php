@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\DailyReport;
 use App\Support\PaymentReportColumns;
+use App\Support\ViolationReportColumns;
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
@@ -40,6 +41,22 @@ class AdminDailyReportsExport implements FromQuery, WithHeadings, WithMapping, S
 
                     if ($column['key'] === 'group_time') {
                         return $report->group_time?->format('Y-m-d H:i:s') ?? '';
+                    }
+
+                    return $value ?? '';
+                })
+                ->all();
+        }
+
+        if ($this->reportType === 'violation_records') {
+            return collect(ViolationReportColumns::definitions())
+                ->map(function (array $column) use ($report) {
+                    $value = $column['key'] === 'client_name_uid'
+                        ? trim(($report->client?->name ?? '-') . ' / ' . ($report->client_id ?? '-'))
+                        : data_get($report, $column['key']);
+
+                    if ($column['key'] === 'snapshots_time') {
+                        return $report->snapshots_time?->format('Y-m-d H:i:s') ?? '';
                     }
 
                     return $value ?? '';
@@ -87,6 +104,10 @@ class AdminDailyReportsExport implements FromQuery, WithHeadings, WithMapping, S
     {
         if ($this->reportType === 'payment_report') {
             return PaymentReportColumns::headings();
+        }
+
+        if ($this->reportType === 'violation_records') {
+            return ViolationReportColumns::headings();
         }
 
         return [

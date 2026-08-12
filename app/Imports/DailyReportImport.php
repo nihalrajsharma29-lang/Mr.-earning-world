@@ -19,6 +19,7 @@ class DailyReportImport implements
 {
     private int $importedRows = 0;
     private int $skippedRows = 0;
+    private int $skippedUnknownHostRows = 0;
 
     /*
     |--------------------------------------------------------------------------
@@ -86,6 +87,10 @@ class DailyReportImport implements
             $reportDateValue = now()->format('Y-m-d');
         }
 
+        if ($reportDateValue === null && $this->reportType === 'violation_records') {
+            $reportDateValue = $this->value($row, ['snapshotstime', 'snapshots time']) ?? now()->format('Y-m-d');
+        }
+
         if ($reportDateValue === null) {
             return $this->markSkipped();
         }
@@ -114,7 +119,8 @@ class DailyReportImport implements
             $detectedClientId = $this->clientId;
         }
 
-        if (! $customer && $this->reportType === 'payment_report') {
+        if (! $customer && in_array($this->reportType, ['payment_report', 'violation_records'], true)) {
+            $this->skippedUnknownHostRows++;
             return $this->markSkipped();
         }
 
@@ -239,6 +245,36 @@ class DailyReportImport implements
                         $row,
                         ['violationrecords', 'violation records', 'violations', 'violation']
                     ),
+
+                'nudity_sexual_behavior_non_friend_calls' =>
+                    $this->number($this->value($row, ['nuditysexualbehaviornonfriendcalls', 'nudity sexual behavior non friend calls']) ?? 0),
+
+                'nudity_sexual_dress_non_friend_calls' =>
+                    $this->number($this->value($row, ['nuditysexualdressnonfriendcalls', 'nudity sexual dress non friend calls']) ?? 0),
+
+                'fake_user_in_screen_non_friend_calls' =>
+                    $this->number($this->value($row, ['fakeuserinscreennonfriendcalls', 'fake user in screen non friend calls']) ?? 0),
+
+                'black_screen_non_friend_calls' =>
+                    $this->number($this->value($row, ['blackscreennonfriendcalls', 'black screen non friend calls']) ?? 0),
+
+                'no_user_in_screen_non_friend_calls' =>
+                    $this->number($this->value($row, ['nouserinscreennonfriendcalls', 'no user in screen non friend calls']) ?? 0),
+
+                'male_in_screen_non_friend_calls' =>
+                    $this->number($this->value($row, ['maleinscreennonfriendcalls', 'male in screen non friend calls']) ?? 0),
+
+                'underage_person_in_screen_all_calls' =>
+                    $this->number($this->value($row, ['underagepersoninscreenallcalls', 'underage person in screen all calls']) ?? 0),
+
+                'nudity_sexual_behavior_friend_calls' =>
+                    $this->number($this->value($row, ['nuditysexualbehaviorfriendcalls', 'nudity sexual behavior friend calls']) ?? 0),
+
+                'nudity_sexual_dress_friend_calls' =>
+                    $this->number($this->value($row, ['nuditysexualdressfriendcalls', 'nudity sexual dress friend calls']) ?? 0),
+
+                'snapshots_time' =>
+                    $this->dateTime($this->value($row, ['snapshotstime', 'snapshots time'])),
 
 
                 /*
@@ -624,6 +660,11 @@ class DailyReportImport implements
     public function getSkippedRows(): int
     {
         return $this->skippedRows;
+    }
+
+    public function getSkippedUnknownHostRows(): int
+    {
+        return $this->skippedUnknownHostRows;
     }
 
     private function markSkipped()

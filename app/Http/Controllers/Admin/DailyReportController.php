@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\BaseController;
 use App\Exports\AdminDailyReportsExport;
 use App\Models\DailyReport;
 use App\Support\PaymentReportColumns;
+use App\Support\ViolationReportColumns;
 use Illuminate\Http\Request;
 
 class DailyReportController extends BaseController
@@ -109,9 +110,13 @@ class DailyReportController extends BaseController
             ? PaymentReportColumns::definitions()
             : [];
 
+        $violationReportColumns = $reportType === 'violation_records'
+            ? ViolationReportColumns::definitions()
+            : [];
+
         return view(
             'admin.clients.daily-reports.index',
-            compact('reports', 'reportType', 'paymentReportColumns', 'paymentSummary')
+            compact('reports', 'reportType', 'paymentReportColumns', 'paymentSummary', 'violationReportColumns')
         );
     }
 

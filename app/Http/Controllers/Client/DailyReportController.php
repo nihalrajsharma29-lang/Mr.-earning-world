@@ -6,6 +6,7 @@ use App\Exports\AdminDailyReportsExport;
 use App\Http\Controllers\Client\BaseController;
 use App\Models\DailyReport;
 use App\Support\PaymentReportColumns;
+use App\Support\ViolationReportColumns;
 use Illuminate\Http\Request;
 
 class DailyReportController extends BaseController
@@ -79,6 +80,20 @@ class DailyReportController extends BaseController
                         ->orWhereHas('customer', function ($customerQuery) use ($search) {
                             $customerQuery->where('customer_id', 'like', "%{$search}%");
                         });
+                } elseif ($reportType === 'violation_records') {
+                    $q->where('host_id', 'like', "%{$search}%")
+                        ->orWhere('user_name', 'like', "%{$search}%")
+                        ->orWhereHas('customer', function ($customerQuery) use ($search) {
+                            $customerQuery
+                                ->where('name', 'like', "%{$search}%")
+                                ->orWhere('username', 'like', "%{$search}%")
+                                ->orWhere('customer_id', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('client', function ($clientQuery) use ($search) {
+                            $clientQuery
+                                ->where('name', 'like', "%{$search}%")
+                                ->orWhere('id', 'like', "%{$search}%");
+                        });
                 } else {
                     $q->where('user_name', 'like', "%{$search}%")
                         ->orWhereHas('customer', function ($customerQuery) use ($search) {
@@ -135,9 +150,13 @@ class DailyReportController extends BaseController
             ? PaymentReportColumns::definitions()
             : [];
 
+        $violationReportColumns = $reportType === 'violation_records'
+            ? ViolationReportColumns::definitions()
+            : [];
+
         return view(
             'client.daily-reports.index',
-            compact('reports', 'client', 'reportType', 'paymentReportColumns', 'paymentSummary')
+            compact('reports', 'client', 'reportType', 'paymentReportColumns', 'paymentSummary', 'violationReportColumns')
         );
     }
 }

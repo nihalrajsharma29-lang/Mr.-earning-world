@@ -70,12 +70,21 @@ class DailyReportImportController extends BaseController
 
             $imported = $import->getImportedRows();
             $skipped = $import->getSkippedRows();
+            $skippedUnknownHost = $import->getSkippedUnknownHostRows();
+
+            $message = 'Reports imported successfully for '
+                . ucwords(str_replace('_', ' ', $request->report_type))
+                . ". Imported: {$imported}, Skipped: {$skipped}.";
+
+            if ($skippedUnknownHost > 0) {
+                $message .= " Unknown host IDs skipped: {$skippedUnknownHost}.";
+            }
 
             return redirect()
                 ->route('admin.daily.import')
                 ->with(
                     'success',
-                    'Reports imported successfully for ' . ucwords(str_replace('_', ' ', $request->report_type)) . ". Imported: {$imported}, Skipped: {$skipped}."
+                    $message
                 );
 
         } catch (\Throwable $e) {

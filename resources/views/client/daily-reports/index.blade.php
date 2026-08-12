@@ -2,10 +2,12 @@
 
 @php
     $activeReportType = $reportType ?? request('report_type', 'daily_report');
+    $isPaymentReport = $activeReportType === 'payment_report';
+    $isViolationReport = $activeReportType === 'violation_records';
 @endphp
 
-@section('title', $activeReportType === 'payment_report' ? 'Payment Report' : 'Daily Reports')
-@section('page-heading', $activeReportType === 'payment_report' ? 'Payment Report' : 'Daily Reports')
+@section('title', $isPaymentReport ? 'Payment Report' : ($isViolationReport ? 'Violation Records' : 'Daily Reports'))
+@section('page-heading', $isPaymentReport ? 'Payment Report' : ($isViolationReport ? 'Violation Records' : 'Daily Reports'))
 
 @push('styles')
 <style>
@@ -58,6 +60,8 @@
     table { width: 100%; border-collapse: collapse; min-width: 900px; }
     th, td { padding: 14px 18px; text-align: left; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
     th { background: #f9fafb; color: #6b7280; font-weight: 700; }
+    .overview-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .overview-text { color: #6b7280; line-height: 1.7; margin: 0; }
 
     .status { display: inline-flex; align-items: center; justify-content: center; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; }
     .status-yes { background: #dcfce7; color: #166534; }
@@ -85,15 +89,31 @@
 
 @section('content')
     <div class="page-header">
-        <h1>{{ $activeReportType === 'payment_report' ? '💰 Payment Reports' : '📅 Daily Reports' }}</h1>
-        <p>{{ $activeReportType === 'payment_report' ? 'Browse payment report data for your hosts and export as needed.' : 'Browse daily report data for your hosts, filter by date, and search by host name or ID.' }}</p>
+        <h1>{{ $isPaymentReport ? '💰 Payment Reports' : ($isViolationReport ? '⚠️ Violation Records' : '📅 Daily Reports') }}</h1>
+        <p>
+            {{
+                $isPaymentReport
+                    ? 'Browse payment report data for your hosts and export as needed.'
+                    : ($isViolationReport
+                        ? 'Search and review violation records submitted for your hosts.'
+                        : 'Browse daily report data for your hosts, filter by date, and search by host name or ID.')
+            }}
+        </p>
     </div>
 
+    @if($isViolationReport)
+        <div class="filter-card">
+            <div class="overview-title">Violations Records Overview</div>
+            <p class="overview-text">Search, filter, and manage all host reports submitted across the system.</p>
+        </div>
+    @endif
+
+    @unless($isViolationReport)
     <div class="summary-grid">
         <div class="summary-card">
-            <div class="summary-title">{{ $activeReportType === 'payment_report' ? 'Total Host Salary' : 'Total Reports' }}</div>
+            <div class="summary-title">{{ $isPaymentReport ? 'Total Host Salary' : 'Total Reports' }}</div>
             <div class="summary-value">
-                @if($activeReportType === 'payment_report')
+                @if($isPaymentReport)
                     ${{ number_format($paymentSummary['total_host_salary'] ?? 0, 2) }}
                 @else
                     {{ $reports->total() }}
@@ -102,9 +122,9 @@
         </div>
 
         <div class="summary-card">
-            <div class="summary-title">{{ $activeReportType === 'payment_report' ? 'Agent Fee' : 'Reports on Page' }}</div>
+            <div class="summary-title">{{ $isPaymentReport ? 'Agent Fee' : 'Reports on Page' }}</div>
             <div class="summary-value">
-                @if($activeReportType === 'payment_report')
+                @if($isPaymentReport)
                     ${{ number_format($paymentSummary['agent_fee_total'] ?? 0, 2) }}
                 @else
                     {{ $reports->count() }}
@@ -113,9 +133,9 @@
         </div>
 
         <div class="summary-card">
-            <div class="summary-title">{{ $activeReportType === 'payment_report' ? 'Agent one time Bonus' : 'Total Coins' }}</div>
+            <div class="summary-title">{{ $isPaymentReport ? 'Agent one time Bonus' : 'Total Coins' }}</div>
             <div class="summary-value">
-                @if($activeReportType === 'payment_report')
+                @if($isPaymentReport)
                     ${{ number_format($paymentSummary['agent_one_time_bonus_total'] ?? 0, 2) }}
                 @else
                     {{ number_format($reports->sum('total_coins')) }}
@@ -128,17 +148,23 @@
             <div class="summary-value">{{ $reports->where('if_active', 'Yes')->count() }}</div>
         </div>
     </div>
+    @endunless
 
     <div class="filter-card">
+        <div class="page-header" style="margin-bottom: 12px;">
+            <h1 style="font-size: 22px; margin-bottom: 6px;">Search Reports</h1>
+            <p style="margin: 0;">Showing: {{ ucwords(str_replace('_', ' ', $activeReportType)) }}</p>
+        </div>
+
         <form action="{{ route('client.daily.reports') }}" method="GET" class="filter-form">
             <input type="hidden" name="report_type" value="{{ $activeReportType }}">
 
             <div class="filter-group">
-                <label for="search">{{ $activeReportType === 'payment_report' ? 'Host ID' : 'Host ID / Name' }}</label>
-                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="{{ $activeReportType === 'payment_report' ? 'Enter host ID' : 'Enter host ID or name' }}">
+                <label for="search">{{ $isViolationReport ? 'Host ID / Client Name / UID' : ($isPaymentReport ? 'Host ID' : 'Host ID / Name') }}</label>
+                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="{{ $isViolationReport ? 'Search by host, client name, or UID' : ($isPaymentReport ? 'Enter host ID' : 'Enter host ID or name') }}">
             </div>
 
-            @unless($activeReportType === 'payment_report')
+            @unless($isPaymentReport)
                 <div class="filter-group">
                     <label for="date">Date</label>
                     <input type="date" name="date" id="date" value="{{ request('date') }}">
@@ -153,12 +179,12 @@
 
     <div class="card">
         <div class="table-header">
-            <h3>{{ $activeReportType === 'payment_report' ? 'Host Payment Reports' : 'Host Daily Reports' }}</h3>
+            <h3>{{ $isPaymentReport ? 'Host Payment Reports' : ($isViolationReport ? 'Report Results' : 'Host Daily Reports') }}</h3>
         </div>
 
         @if($reports->count() > 0)
             <div class="table-wrapper">
-                @if($activeReportType === 'payment_report')
+                @if($isPaymentReport)
                     <table>
                         <thead>
                             <tr>
@@ -186,6 +212,46 @@
                                             <td>{{ number_format((int) ($rawValue ?? 0)) }}</td>
                                         @elseif($type === 'datetime')
                                             <td>{{ $rawValue ? \Illuminate\Support\Carbon::parse($rawValue)->format('Y-m-d H:i:s') : '-' }}</td>
+                                        @else
+                                            <td>{{ $rawValue !== null && $rawValue !== '' ? $rawValue : '-' }}</td>
+                                        @endif
+                                    @endforeach
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @elseif($isViolationReport)
+                    <table>
+                        <thead>
+                            <tr>
+                                @foreach($violationReportColumns as $column)
+                                    <th>{{ $column['label'] }}</th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($reports as $report)
+                                <tr>
+                                    @foreach($violationReportColumns as $column)
+                                        @php
+                                            $rawValue = $column['key'] === 'client_name_uid'
+                                                ? trim(($report->client?->name ?? '-') . ' / ' . ($report->client_id ?? '-'))
+                                                : data_get($report, $column['key']);
+                                            $type = $column['type'] ?? 'text';
+                                        @endphp
+
+                                        @if($type === 'integer')
+                                            <td>{{ number_format((int) ($rawValue ?? 0)) }}</td>
+                                        @elseif($type === 'datetime')
+                                            <td>
+                                                {{
+                                                    $rawValue
+                                                        ? ($column['key'] === 'snapshots_time'
+                                                            ? \Illuminate\Support\Carbon::parse($rawValue)->format('d-M-Y')
+                                                            : \Illuminate\Support\Carbon::parse($rawValue)->format('Y-m-d H:i:s'))
+                                                        : '-'
+                                                }}
+                                            </td>
                                         @else
                                             <td>{{ $rawValue !== null && $rawValue !== '' ? $rawValue : '-' }}</td>
                                         @endif

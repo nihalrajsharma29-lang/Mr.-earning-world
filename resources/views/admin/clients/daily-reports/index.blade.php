@@ -3,10 +3,11 @@
 @php
     $activeReportType = $reportType ?? request('report_type', 'daily_report');
     $isPaymentReport = $activeReportType === 'payment_report';
+    $isViolationReport = $activeReportType === 'violation_records';
 @endphp
 
-@section('title', $isPaymentReport ? 'Admin - Payment Report' : 'Admin - Daily Reports')
-@section('page-heading', $isPaymentReport ? 'Payment Report' : 'Daily Reports')
+@section('title', $isPaymentReport ? 'Admin - Payment Report' : ($isViolationReport ? 'Admin - Violation Records' : 'Admin - Daily Reports'))
+@section('page-heading', $isPaymentReport ? 'Payment Report' : ($isViolationReport ? 'Violation Records' : 'Daily Reports'))
 
 @push('styles')
 <style>
@@ -44,11 +45,12 @@
 @section('content')
     <div class="panel">
         <div class="panel-body">
-            <div class="panel-title">{{ $isPaymentReport ? 'Payment Reports Overview' : 'Daily Reports Overview' }}</div>
+            <div class="panel-title">{{ $isPaymentReport ? 'Payment Reports Overview' : ($isViolationReport ? 'Violations Records Overview' : 'Daily Reports Overview') }}</div>
             <p class="panel-text">Search, filter, and manage all host reports submitted across the system. Use the date delete card to remove all reports for a specific date.</p>
         </div>
     </div>
 
+    @unless($isViolationReport)
     <div class="summary-grid">
         <div class="summary-card">
             <div class="summary-label">{{ $isPaymentReport ? 'Total Host Final Rewards' : 'Total Reports' }}</div>
@@ -94,6 +96,7 @@
             </div>
         </div>
     </div>
+    @endunless
 
     <div class="panel">
         <div class="panel-body">
@@ -170,6 +173,54 @@
                                                 <td>{{ number_format((int) ($rawValue ?? 0)) }}</td>
                                             @elseif($type === 'datetime')
                                                 <td>{{ $rawValue ? \Illuminate\Support\Carbon::parse($rawValue)->format('Y-m-d H:i:s') : '-' }}</td>
+                                            @else
+                                                <td>{{ $rawValue !== null && $rawValue !== '' ? $rawValue : '-' }}</td>
+                                            @endif
+                                        @endforeach
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @elseif(($reportType ?? request('report_type', 'daily_report')) === 'violation_records')
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="select-all-reports"></th>
+                                    @foreach($violationReportColumns as $column)
+                                        <th>{{ $column['label'] }}</th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($reports as $report)
+                                    <tr>
+                                        <td>
+                                            <input
+                                                type="checkbox"
+                                                class="report-select-checkbox"
+                                                value="{{ $report->id }}"
+                                            >
+                                        </td>
+                                        @foreach($violationReportColumns as $column)
+                                            @php
+                                                $rawValue = $column['key'] === 'client_name_uid'
+                                                    ? trim(($report->client?->name ?? '-') . ' / ' . ($report->client_id ?? '-'))
+                                                    : data_get($report, $column['key']);
+                                                $type = $column['type'] ?? 'text';
+                                            @endphp
+
+                                            @if($type === 'integer')
+                                                <td>{{ number_format((int) ($rawValue ?? 0)) }}</td>
+                                            @elseif($type === 'datetime')
+                                                <td>
+                                                    {{
+                                                        $rawValue
+                                                            ? ($column['key'] === 'snapshots_time'
+                                                                ? \Illuminate\Support\Carbon::parse($rawValue)->format('d-M-Y')
+                                                                : \Illuminate\Support\Carbon::parse($rawValue)->format('Y-m-d H:i:s'))
+                                                            : '-'
+                                                    }}
+                                                </td>
                                             @else
                                                 <td>{{ $rawValue !== null && $rawValue !== '' ? $rawValue : '-' }}</td>
                                             @endif
