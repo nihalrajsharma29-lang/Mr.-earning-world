@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Admin\BaseController;
 use App\Exports\AdminDailyReportsExport;
+use App\Models\AdminAuditLog;
 use App\Models\DailyReport;
 use App\Support\PaymentReportColumns;
 use App\Support\ViolationReportColumns;
@@ -11,11 +12,20 @@ use Illuminate\Http\Request;
 
 class DailyReportController extends BaseController
 {
+    public function __construct()
+    {
+        abort_unless(
+            auth()->check() && in_array(auth()->user()->role, ['admin', 'manager'], true),
+            403
+        );
+    }
+
     /**
      * Display all daily reports for admin.
      */
     public function index(Request $request)
     {
+        $isManager = auth()->user()->role === 'manager';
         $reportType = $request->input('report_type', 'daily_report');
 
         $query = DailyReport::with(['customer', 'client'])
@@ -106,7 +116,7 @@ class DailyReportController extends BaseController
             : [];
 
         return view(
-            'admin.clients.daily-reports.index',
+            $isManager ? 'manager.reports.index' : 'admin.clients.daily-reports.index',
             compact('reports', 'reportType', 'paymentReportColumns', 'paymentSummary', 'violationReportColumns')
         );
     }
@@ -133,8 +143,24 @@ class DailyReportController extends BaseController
 
         $deleted = $query->delete();
 
+        AdminAuditLog::create([
+            'admin_id' => auth()->id(),
+            'action' => 'delete_reports_by_date',
+            'details' => sprintf(
+                '%s deleted %d report(s) for date %s%s.',
+                auth()->user()->name,
+                $deleted,
+                $date,
+                $reportType ? ' in ' . ucwords(str_replace('_', ' ', $reportType)) : ''
+            ),
+            'ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+
+        $routeName = auth()->user()->role === 'manager' ? 'manager.reports' : 'admin.reports';
+
         return redirect()
-            ->route('admin.reports', ['date' => $date, 'report_type' => $reportType])
+            ->route($routeName, ['date' => $date, 'report_type' => $reportType])
             ->with(
                 'success',
                 "{$deleted} report(s) deleted for {$date}."
@@ -160,8 +186,23 @@ class DailyReportController extends BaseController
             ->where('report_type', $reportType)
             ->delete();
 
+        AdminAuditLog::create([
+            'admin_id' => auth()->id(),
+            'action' => 'delete_selected_reports',
+            'details' => sprintf(
+                '%s deleted %d selected report(s) from %s.',
+                auth()->user()->name,
+                $deleted,
+                ucwords(str_replace('_', ' ', $reportType))
+            ),
+            'ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+
+        $routeName = auth()->user()->role === 'manager' ? 'manager.reports' : 'admin.reports';
+
         return redirect()
-            ->route('admin.reports', ['report_type' => $reportType])
+            ->route($routeName, ['report_type' => $reportType])
             ->with('success', "{$deleted} selected report(s) deleted.");
     }
 }

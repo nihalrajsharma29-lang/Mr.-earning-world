@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Admin Portal')</title>
+    <title>@yield('title', 'Manager Portal')</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { box-sizing: border-box; }
@@ -16,7 +16,6 @@
         .menu-title { padding: 15px 20px 8px; font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; }
         .menu a { display: block; padding: 12px 20px; color: #d1d5db; text-decoration: none; font-size: 14px; }
         .menu a:hover, .menu a.active { background: #1f2937; color: white; }
-        .menu .menu-disabled { display: block; padding: 12px 20px; color: #6b7280; font-size: 14px; cursor: not-allowed; }
         .logout-form { margin-top: 10px; }
         .logout-btn { width: 100%; border: none; background: transparent; color: #d1d5db; text-align: left; padding: 12px 20px; font-size: 14px; cursor: pointer; }
         .logout-btn:hover { background: #1f2937; color: white; }
@@ -66,17 +65,16 @@
 <body class="bg-gray-100">
     <div class="app-shell">
         <aside class="sidebar" id="sidebar">
-            <div class="logo">Admin <span>Portal</span></div>
+            <div class="logo">Manager <span>Portal</span></div>
             <div class="menu">
                 <div class="menu-title">Navigation</div>
-                <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">🏠 Dashboard</a>
-                <a href="{{ route('clients.index') }}" class="{{ request()->routeIs('clients.*') ? 'active' : '' }}">👥 Clients</a>
-                <a href="{{ route('admin.daily.import') }}" class="{{ request()->routeIs('admin.daily.import*') ? 'active' : '' }}">� Import Reports</a>
-                <a href="{{ route('admin.reports', ['report_type' => 'daily_report']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type', 'daily_report') === 'daily_report' ? 'active' : '' }}">📅 Daily Report</a>
-                <a href="{{ route('admin.reports', ['report_type' => 'payment_report']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type') === 'payment_report' ? 'active' : '' }}">💰 Payment Report</a>
-                <a href="{{ route('admin.reports', ['report_type' => 'violation_records']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type') === 'violation_records' ? 'active' : '' }}">⚠️ Violation Records</a>
-                <a href="{{ route('admin.audit') }}" class="{{ request()->routeIs('admin.audit') ? 'active' : '' }}">📝 Audit Log</a>
-                <a href="{{ route('admin.hosts.index') }}" class="{{ request()->routeIs('admin.hosts.*') ? 'active' : '' }}">✅ Hosts</a>
+                <a href="{{ route('manager.dashboard') }}" class="{{ request()->routeIs('manager.dashboard') ? 'active' : '' }}">🏠 Dashboard</a>
+                <a href="{{ route('manager.daily.import') }}" class="{{ request()->routeIs('manager.daily.import*') ? 'active' : '' }}">📥 Import Report</a>
+                <a href="{{ route('manager.reports', ['report_type' => 'daily_report']) }}" class="{{ request()->routeIs('manager.reports') && request('report_type', 'daily_report') === 'daily_report' ? 'active' : '' }}">📅 Daily Report</a>
+                <a href="{{ route('manager.reports', ['report_type' => 'payment_report']) }}" class="{{ request()->routeIs('manager.reports') && request('report_type') === 'payment_report' ? 'active' : '' }}">💰 Payment Report</a>
+                <a href="{{ route('manager.reports', ['report_type' => 'violation_records']) }}" class="{{ request()->routeIs('manager.reports') && request('report_type') === 'violation_records' ? 'active' : '' }}">⚠️ Violation Records</a>
+                <a href="{{ route('manager.clients.index') }}" class="{{ request()->routeIs('manager.clients.*') ? 'active' : '' }}">👥 Client</a>
+                <a href="{{ route('manager.hosts.index') }}" class="{{ request()->routeIs('manager.hosts.*') ? 'active' : '' }}">✅ Host</a>
                 <div class="menu-title">Account</div>
                 <form method="POST" action="{{ route('logout') }}" class="logout-form">
                     @csrf
@@ -89,12 +87,12 @@
             <div class="topbar">
                 <div class="topbar-left">
                     <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Open menu">☰</button>
-                    <h2>@yield('page-heading', 'Admin Dashboard')</h2>
+                    <h2>@yield('page-heading', 'Manager Dashboard')</h2>
                 </div>
-                <a href="{{ route('profile.edit') }}" class="profile" style="text-decoration: none; color: inherit;">
+                <div class="profile">
                     <div class="profile-icon">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
                     <div><strong>{{ auth()->user()->name }}</strong></div>
-                </a>
+                </div>
             </div>
             <div class="content">@yield('content')</div>
         </main>

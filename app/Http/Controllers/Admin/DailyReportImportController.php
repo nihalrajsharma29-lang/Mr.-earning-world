@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Admin\BaseController;
 use App\Imports\DailyReportImport;
+use App\Models\AdminAuditLog;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -11,14 +12,24 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class DailyReportImportController extends BaseController
 {
+    public function __construct()
+    {
+        abort_unless(
+            auth()->check() && in_array(auth()->user()->role, ['admin', 'manager'], true),
+            403
+        );
+    }
+
     /**
      * Show Admin Daily Report Import page.
      */
     public function create()
     {
-        abort_unless(auth()->user()->role === 'admin', 403);
+        abort_unless(in_array(auth()->user()->role, ['admin', 'manager'], true), 403);
 
-        return view('admin.daily-reports.import');
+        return view(auth()->user()->role === 'manager'
+            ? 'manager.daily-reports.import'
+            : 'admin.daily-reports.import');
     }
 
     /**
@@ -26,7 +37,7 @@ class DailyReportImportController extends BaseController
      */
     public function store(Request $request)
     {
-        abort_unless(auth()->user()->role === 'admin', 403);
+        abort_unless(in_array(auth()->user()->role, ['admin', 'manager'], true), 403);
 
         // TEMPORARY ZIP DEBUG
         
@@ -50,7 +61,7 @@ class DailyReportImportController extends BaseController
 
         if ($requiredToken && stripos($fileName, $requiredToken) === false) {
             return redirect()
-                ->route('admin.daily.import')
+                ->route(auth()->user()->role === 'manager' ? 'manager.daily.import' : 'admin.daily.import')
                 ->with(
                     'error',
                     "Invalid file name for "
@@ -64,7 +75,7 @@ class DailyReportImportController extends BaseController
             ! $this->hasDailyReportDateHeader($request->file('file'))
         ) {
             return redirect()
-                ->route('admin.daily.import')
+                ->route(auth()->user()->role === 'manager' ? 'manager.daily.import' : 'admin.daily.import')
                 ->with(
                     'error',
                     'Invalid Daily Report file: first row must contain a Date column (Date / DT / Report Date).'
@@ -94,8 +105,24 @@ class DailyReportImportController extends BaseController
                 $message .= " Unknown host IDs skipped: {$skippedUnknownHost}.";
             }
 
+            AdminAuditLog::create([
+                'admin_id' => auth()->id(),
+                'action' => 'import_report',
+                'details' => sprintf(
+                    '%s imported %s file "%s". Imported: %d, Skipped: %d, Unknown host skipped: %d.',
+                    auth()->user()->name,
+                    ucwords(str_replace('_', ' ', $request->report_type)),
+                    $fileName,
+                    $imported,
+                    $skipped,
+                    $skippedUnknownHost
+                ),
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+
             return redirect()
-                ->route('admin.daily.import')
+                ->route(auth()->user()->role === 'manager' ? 'manager.daily.import' : 'admin.daily.import')
                 ->with(
                     'success',
                     $message
@@ -104,7 +131,7 @@ class DailyReportImportController extends BaseController
         } catch (\Throwable $e) {
 
             return redirect()
-                ->route('admin.daily.import')
+                ->route(auth()->user()->role === 'manager' ? 'manager.daily.import' : 'admin.daily.import')
                 ->with(
                     'error',
                     'Import failed: ' . $e->getMessage()

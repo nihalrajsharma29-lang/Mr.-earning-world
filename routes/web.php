@@ -84,6 +84,10 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('admin.dashboard');
         }
 
+        if (auth()->user()->role === 'manager') {
+            return redirect()->route('manager.dashboard');
+        }
+
         return redirect()->route('client.dashboard');
 
     })->name('dashboard');
@@ -100,6 +104,55 @@ Route::middleware('auth')->group(function () {
         [AdminDashboardController::class, 'index']
     )->name('admin.dashboard');
 
+    Route::get(
+        '/manager/dashboard',
+        [\App\Http\Controllers\Manager\DashboardController::class, 'index']
+    )->name('manager.dashboard');
+
+    Route::get(
+        '/manager/daily-reports/import',
+        [\App\Http\Controllers\Admin\DailyReportImportController::class, 'create']
+    )->name('manager.daily.import');
+
+    Route::post(
+        '/manager/daily-reports/import',
+        [\App\Http\Controllers\Admin\DailyReportImportController::class, 'store']
+    )->name('manager.daily.import.store');
+
+    Route::get(
+        '/manager/reports',
+        [\App\Http\Controllers\Admin\DailyReportController::class, 'index']
+    )->name('manager.reports');
+
+    Route::delete(
+        '/manager/reports/date/{date}',
+        [\App\Http\Controllers\Admin\DailyReportController::class, 'destroyByDate']
+    )->name('manager.reports.delete.date');
+
+    Route::delete(
+        '/manager/reports/selected',
+        [\App\Http\Controllers\Admin\DailyReportController::class, 'destroySelected']
+    )->name('manager.reports.delete.selected');
+
+    Route::get(
+        '/manager/clients',
+        [\App\Http\Controllers\Manager\ClientController::class, 'index']
+    )->name('manager.clients.index');
+
+    Route::get(
+        '/manager/hosts',
+        [\App\Http\Controllers\Admin\HostApprovalController::class, 'index']
+    )->name('manager.hosts.index');
+
+    Route::patch(
+        '/manager/hosts/{customer}/approve',
+        [\App\Http\Controllers\Admin\HostApprovalController::class, 'approve']
+    )->name('manager.hosts.approve');
+
+    Route::patch(
+        '/manager/hosts/{customer}/reject',
+        [\App\Http\Controllers\Admin\HostApprovalController::class, 'reject']
+    )->name('manager.hosts.reject');
 
     /*
     |--------------------------------------------------------------------------
@@ -314,6 +367,26 @@ Route::middleware('auth')->group(function () {
         [ProfileController::class,
         'destroy'
     ])->name('profile.destroy');
+
+    Route::post(
+        '/admin/managers',
+        [\App\Http\Controllers\Admin\ManagerController::class, 'store']
+    )->name('admin.managers.store');
+
+    Route::put(
+        '/admin/managers/{manager}',
+        [\App\Http\Controllers\Admin\ManagerController::class, 'update']
+    )->name('admin.managers.update');
+
+    Route::delete(
+        '/admin/managers/{manager}',
+        [\App\Http\Controllers\Admin\ManagerController::class, 'destroy']
+    )->name('admin.managers.destroy');
+
+    Route::get(
+        '/admin/managers',
+        [\App\Http\Controllers\Admin\ManagerController::class, 'index']
+    )->name('admin.managers.index');
 
 });
 
