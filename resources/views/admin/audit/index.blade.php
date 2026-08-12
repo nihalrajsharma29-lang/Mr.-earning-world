@@ -10,24 +10,33 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
-            <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Action</label>
-                    <input type="text" name="action" value="{{ request('action') }}" placeholder="Action" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Manager ID</label>
-                    <input type="text" name="admin_id" value="{{ request('admin_id') }}" placeholder="Manager ID" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
-                    <input type="text" name="client_id" value="{{ request('client_id') }}" placeholder="Client ID" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div class="flex gap-2">
-                    <button class="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 font-medium">Filter</button>
-                    <a href="{{ route('admin.audit') }}" class="bg-gray-200 text-gray-800 px-4 py-2.5 rounded-lg hover:bg-gray-300 font-medium flex items-center justify-center">Reset</a>
-                </div>
-            </form>
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end flex-1">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Action</label>
+                        <input type="text" name="action" value="{{ request('action') }}" placeholder="Action" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Manager ID</label>
+                        <input type="text" name="admin_id" value="{{ request('admin_id') }}" placeholder="Manager ID" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                        <input type="text" name="client_id" value="{{ request('client_id') }}" placeholder="Client ID" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex gap-2 flex-wrap">
+                        <button class="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 font-medium">Filter</button>
+                        <a href="{{ route('admin.audit') }}" class="bg-gray-200 text-gray-800 px-4 py-2.5 rounded-lg hover:bg-gray-300 font-medium flex items-center justify-center">Reset</a>
+                        <button type="button" onclick="window.location.reload()" class="bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 font-medium">Refresh</button>
+                    </div>
+                </form>
+
+                <form method="POST" action="{{ route('admin.audit.clear') }}" onsubmit="return confirm('Clear all audit log entries?');" class="inline-block">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-700 font-medium">Clear Audit Log</button>
+                </form>
+            </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

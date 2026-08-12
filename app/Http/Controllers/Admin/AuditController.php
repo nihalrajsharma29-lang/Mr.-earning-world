@@ -28,4 +28,11 @@ class AuditController extends BaseController
 
         return view('admin.audit.index', compact('logs'));
     }
+
+    public function clear()
+    {
+        AdminAuditLog::query()->delete();
+
+        return redirect()->route('admin.audit')->with('success', 'Audit log cleared successfully.');
+    }
 }

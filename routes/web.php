@@ -205,6 +205,11 @@ Route::middleware('auth')->group(function () {
         [\App\Http\Controllers\Admin\AuditController::class, 'index']
     )->name('admin.audit');
 
+    Route::delete(
+        '/admin/audit/clear',
+        [\App\Http\Controllers\Admin\AuditController::class, 'clear']
+    )->name('admin.audit.clear');
+
 
     /*
     |--------------------------------------------------------------------------
