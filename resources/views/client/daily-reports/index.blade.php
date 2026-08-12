@@ -67,6 +67,10 @@
     .status-yes { background: #dcfce7; color: #166534; }
     .status-no { background: #fee2e2; color: #991b1b; }
 
+    .alert { border-radius: 14px; padding: 14px 16px; margin-bottom: 18px; font-size: 14px; }
+    .alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
 
     .empty { padding: 60px 20px; text-align: center; color: #6b7280; }
     .empty-icon { font-size: 42px; margin-bottom: 16px; }
@@ -85,6 +89,14 @@
 @endpush
 
 @section('content')
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-error">{{ session('error') }}</div>
+    @endif
+
     <div class="page-header">
         <h1>{{ $isPaymentReport ? '💰 Payment Reports' : ($isViolationReport ? '⚠️ Violation Records' : '📅 Daily Reports') }}</h1>
         <p>
@@ -141,8 +153,14 @@
         </div>
 
         <div class="summary-card">
-            <div class="summary-title">Active Reports</div>
-            <div class="summary-value">{{ $reports->where('if_active', 'Yes')->count() }}</div>
+            <div class="summary-title">{{ $isPaymentReport ? 'Agent Total Salary' : 'Active Reports' }}</div>
+            <div class="summary-value">
+                @if($isPaymentReport)
+                    ${{ number_format($paymentSummary['total_salary'] ?? 0, 2) }}
+                @else
+                    {{ $reports->where('if_active', 'Yes')->count() }}
+                @endif
+            </div>
         </div>
     </div>
     @endunless

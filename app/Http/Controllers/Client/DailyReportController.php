@@ -36,6 +36,12 @@ class DailyReportController extends BaseController
 
         $reportType = $request->input('report_type', 'daily_report');
 
+        if ($reportType === 'payment_status') {
+            return redirect()
+                ->route('client.daily.reports', ['report_type' => 'daily_report'])
+                ->with('error', 'Payment Status option will be opened very soon.');
+        }
+
         $query = DailyReport::with(['customer', 'client'])
             ->where('client_id', $client->id)
             ->where('report_type', $reportType);
@@ -128,10 +134,14 @@ class DailyReportController extends BaseController
 
         $paymentSummary = null;
         if ($reportType === 'payment_report') {
+            $agentFeeTotal = (float) (clone $query)->sum('agent_fee_usd');
+            $agentOneTimeBonusTotal = (float) (clone $query)->sum('agent_one_time_bonus_usd');
+
             $paymentSummary = [
                 'total_host_salary' => (float) (clone $query)->sum('hosts_final_reward_usd'),
-                'agent_fee_total' => (float) (clone $query)->sum('agent_fee_usd'),
-                'agent_one_time_bonus_total' => (float) (clone $query)->sum('agent_one_time_bonus_usd'),
+                'agent_fee_total' => $agentFeeTotal,
+                'agent_one_time_bonus_total' => $agentOneTimeBonusTotal,
+                'total_salary' => $agentFeeTotal + $agentOneTimeBonusTotal,
             ];
         }
 

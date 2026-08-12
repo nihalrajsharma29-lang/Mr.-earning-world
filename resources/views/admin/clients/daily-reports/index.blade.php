@@ -35,6 +35,9 @@
     .badge-approved { background: #dcfce7; color: #166534; }
     .badge-pending { background: #fef3c7; color: #92400e; }
     .badge-rejected { background: #fee2e2; color: #991b1b; }
+    .alert { border-radius: 14px; padding: 14px 16px; margin-bottom: 18px; font-size: 14px; }
+    .alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
     .empty { padding: 48px; text-align: center; color: #6b7280; }
     @media (max-width: 960px) { .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filter-form { grid-template-columns: 1fr; } }
     @media (max-width: 660px) { .summary-grid { grid-template-columns: 1fr; } }
@@ -42,6 +45,14 @@
 @endpush
 
 @section('content')
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-error">{{ session('error') }}</div>
+    @endif
+
     <div class="panel">
         <div class="panel-body">
             <div class="panel-title">{{ $isPaymentReport ? 'Payment Reports Overview' : ($isViolationReport ? 'Violations Records Overview' : 'Daily Reports Overview') }}</div>
@@ -85,10 +96,10 @@
         </div>
 
         <div class="summary-card">
-            <div class="summary-label">Active Reports</div>
+            <div class="summary-label">Agent Total Salary</div>
             <div class="summary-value">
                 @if($isPaymentReport)
-                    {{ $paymentSummary['active_report_ids'] ?? 0 }}
+                    ${{ number_format($paymentSummary['total_salary'] ?? 0, 2) }}
                 @else
                     {{ $reports->where('if_active', 'Yes')->count() }}
                 @endif

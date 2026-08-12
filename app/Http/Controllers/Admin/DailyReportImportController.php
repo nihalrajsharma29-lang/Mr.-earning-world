@@ -45,6 +45,12 @@ class DailyReportImportController extends BaseController
             ],
         ]);
 
+        if ($request->report_type === 'payment_status') {
+            return redirect()
+                ->route('admin.daily.import')
+                ->with('error', 'Payment Status import option will be opened very soon.');
+        }
+
         $fileName = $request->file('file')->getClientOriginalName();
         $requiredToken = $this->requiredFileNameToken($request->report_type);
 

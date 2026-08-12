@@ -54,6 +54,14 @@
         .menu-title {
             padding: 12px 20px 7px;
             font-size: 11px;
+
+        .menu .menu-disabled {
+            display: block;
+            padding: 12px 20px;
+            color: #6b7280;
+            font-size: 14px;
+            cursor: not-allowed;
+        }
             color: #9ca3af;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -262,9 +270,9 @@
                     💰 Payment Report
                 </a>
 
-                <a href="{{ route('client.daily.reports', ['report_type' => 'payment_status']) }}" class="{{ request()->routeIs('client.daily.reports') && request('report_type') === 'payment_status' ? 'active' : '' }}">
-                    💳 Payment Status
-                </a>
+                <span class="menu-disabled" title="Payment Status will be available soon.">
+                    💳 Payment Status (Coming Soon)
+                </span>
 
                 <a href="{{ route('client.daily.reports', ['report_type' => 'violation_records']) }}" class="{{ request()->routeIs('client.daily.reports') && request('report_type') === 'violation_records' ? 'active' : '' }}">
                     ⚠️ Violation Records

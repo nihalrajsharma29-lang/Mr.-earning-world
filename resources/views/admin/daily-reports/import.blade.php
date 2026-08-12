@@ -54,9 +54,9 @@
                     <option value="" {{ old('report_type') ? '' : 'selected' }} disabled>Select Report Type</option>
                     <option value="daily_report" {{ old('report_type') === 'daily_report' ? 'selected' : '' }}>Daily Report</option>
                     <option value="payment_report" {{ old('report_type') === 'payment_report' ? 'selected' : '' }}>Payment Report</option>
-                    <option value="payment_status" {{ old('report_type') === 'payment_status' ? 'selected' : '' }}>Payment Status</option>
                     <option value="violation_records" {{ old('report_type') === 'violation_records' ? 'selected' : '' }}>Violation Records</option>
                 </select>
+                <p style="margin: 8px 0 0; color: #6b7280; font-size: 13px;">Payment Status option will be opened very soon.</p>
             </div>
 
             <div class="form-group">

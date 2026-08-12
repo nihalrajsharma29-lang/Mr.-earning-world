@@ -16,6 +16,7 @@
         .menu-title { padding: 15px 20px 8px; font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; }
         .menu a { display: block; padding: 12px 20px; color: #d1d5db; text-decoration: none; font-size: 14px; }
         .menu a:hover, .menu a.active { background: #1f2937; color: white; }
+        .menu .menu-disabled { display: block; padding: 12px 20px; color: #6b7280; font-size: 14px; cursor: not-allowed; }
         .logout-form { margin-top: 10px; }
         .logout-btn { width: 100%; border: none; background: transparent; color: #d1d5db; text-align: left; padding: 12px 20px; font-size: 14px; cursor: pointer; }
         .logout-btn:hover { background: #1f2937; color: white; }
@@ -73,7 +74,7 @@
                 <a href="{{ route('admin.daily.import') }}" class="{{ request()->routeIs('admin.daily.import*') ? 'active' : '' }}">� Import Reports</a>
                 <a href="{{ route('admin.reports', ['report_type' => 'daily_report']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type', 'daily_report') === 'daily_report' ? 'active' : '' }}">📅 Daily Report</a>
                 <a href="{{ route('admin.reports', ['report_type' => 'payment_report']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type') === 'payment_report' ? 'active' : '' }}">💰 Payment Report</a>
-                <a href="{{ route('admin.reports', ['report_type' => 'payment_status']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type') === 'payment_status' ? 'active' : '' }}">💳 Payment Status</a>
+                <span class="menu-disabled" title="Payment Status will be available soon.">💳 Payment Status (Coming Soon)</span>
                 <a href="{{ route('admin.reports', ['report_type' => 'violation_records']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type') === 'violation_records' ? 'active' : '' }}">⚠️ Violation Records</a>
                 <a href="{{ route('admin.audit') }}" class="{{ request()->routeIs('admin.audit') ? 'active' : '' }}">📝 Audit Log</a>
                 <a href="{{ route('admin.hosts.index') }}" class="{{ request()->routeIs('admin.hosts.*') ? 'active' : '' }}">✅ Hosts</a>
