@@ -84,17 +84,6 @@
         </div>
 
         <div class="summary-card">
-            <div class="summary-label">Total Salary</div>
-            <div class="summary-value">
-                @if($isPaymentReport)
-                    ${{ number_format($paymentSummary['total_salary'] ?? 0, 2) }}
-                @else
-                    ${{ number_format($reports->sum('salary_amount'), 2) }}
-                @endif
-            </div>
-        </div>
-
-        <div class="summary-card">
             <div class="summary-label">Active Reports</div>
             <div class="summary-value">
                 @if($isPaymentReport)
