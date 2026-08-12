@@ -5,12 +5,13 @@
 
 @push('styles')
 <style>
+    .page-header { text-align: left; }
     .page-header h1 { margin-bottom: 8px; }
     .page-header p { color: #6b7280; }
     .card { border-radius: 16px; overflow: hidden; }
     .table-wrapper { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 14px 16px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+    th, td { padding: 14px 16px; border-bottom: 1px solid #f0f0f0; font-size: 14px; text-align: center; }
     th { background: #f9fafb; color: #6b7280; }
     .badge { display: inline-flex; align-items: center; justify-content: center; padding: 6px 14px; border-radius: 9999px; font-weight: 700; font-size: 12px; }
     .badge-approved { background: #dcfce7; color: #166534; }
@@ -24,7 +25,7 @@
     .btn-reject { background: #dc2626; color: white; }
     .empty { text-align: center; padding: 50px 20px; color: #6b7280; }
     .empty-icon { font-size: 40px; margin-bottom: 16px; }
-    .cta-link { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: #2563eb; font-weight: 700; }
+    .cta-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; color: #2563eb; font-weight: 700; }
 </style>
 @endpush
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Exports\AdminDailyReportsExport;
 use App\Http\Controllers\Client\BaseController;
 use App\Models\DailyReport;
+use App\Support\PaymentReportColumns;
 use Illuminate\Http\Request;
 
 class DailyReportController extends BaseController
@@ -32,8 +33,11 @@ class DailyReportController extends BaseController
         |--------------------------------------------------------------------------
         */
 
-        $query = DailyReport::with('customer')
-            ->where('client_id', $client->id);
+        $reportType = $request->input('report_type', 'daily_report');
+
+        $query = DailyReport::with(['customer', 'client'])
+            ->where('client_id', $client->id)
+            ->where('report_type', $reportType);
 
         /*
         |--------------------------------------------------------------------------
@@ -41,8 +45,16 @@ class DailyReportController extends BaseController
         |--------------------------------------------------------------------------
         */
 
-        if ($request->filled('date')) {
+        if ($reportType !== 'payment_report' && $request->filled('date')) {
             $query->whereDate('dt', $request->date);
+        }
+
+        if ($request->filled('host_id')) {
+            $query->where('host_id', 'like', '%'.$request->host_id.'%');
+        }
+
+        if ($request->filled('salary_status')) {
+            $query->where('salary_status', 'like', '%'.$request->salary_status.'%');
         }
 
         /*
@@ -50,7 +62,6 @@ class DailyReportController extends BaseController
         | Search Filter
         |--------------------------------------------------------------------------
         |
-        | Host ID
         | User Name
         | Customer Name
         | Customer Username
@@ -62,19 +73,21 @@ class DailyReportController extends BaseController
 
             $search = trim($request->search);
 
-            $query->where(function ($q) use ($search) {
-
-                $q->where('host_id', 'like', "%{$search}%")
-
-                    ->orWhere('user_name', 'like', "%{$search}%")
-
-                    ->orWhereHas('customer', function ($customerQuery) use ($search) {
-
-                        $customerQuery
-                            ->where('name', 'like', "%{$search}%")
-                            ->orWhere('username', 'like', "%{$search}%")
-                            ->orWhere('customer_id', 'like', "%{$search}%");
-                    });
+            $query->where(function ($q) use ($search, $reportType) {
+                if ($reportType === 'payment_report') {
+                    $q->where('host_id', 'like', "%{$search}%")
+                        ->orWhereHas('customer', function ($customerQuery) use ($search) {
+                            $customerQuery->where('customer_id', 'like', "%{$search}%");
+                        });
+                } else {
+                    $q->where('user_name', 'like', "%{$search}%")
+                        ->orWhereHas('customer', function ($customerQuery) use ($search) {
+                            $customerQuery
+                                ->where('name', 'like', "%{$search}%")
+                                ->orWhere('username', 'like', "%{$search}%")
+                                ->orWhere('customer_id', 'like', "%{$search}%");
+                        });
+                }
             });
         }
 
@@ -85,7 +98,7 @@ class DailyReportController extends BaseController
         */
 
         if ($request->filled('export')) {
-            $export = new AdminDailyReportsExport($query);
+            $export = new AdminDailyReportsExport($query, $reportType);
 
             return $export->download(
                 'client-daily-reports_'.now()->format('Ymd_His').'.xlsx'
@@ -98,6 +111,15 @@ class DailyReportController extends BaseController
         |--------------------------------------------------------------------------
         */
 
+        $paymentSummary = null;
+        if ($reportType === 'payment_report') {
+            $paymentSummary = [
+                'total_host_salary' => (float) (clone $query)->sum('hosts_final_reward_usd'),
+                'agent_fee_total' => (float) (clone $query)->sum('agent_fee_usd'),
+                'agent_one_time_bonus_total' => (float) (clone $query)->sum('agent_one_time_bonus_usd'),
+            ];
+        }
+
         $reports = $query
             ->latest('dt')
             ->paginate(20)
@@ -109,9 +131,13 @@ class DailyReportController extends BaseController
         |--------------------------------------------------------------------------
         */
 
+        $paymentReportColumns = $reportType === 'payment_report'
+            ? PaymentReportColumns::definitions()
+            : [];
+
         return view(
             'client.daily-reports.index',
-            compact('reports', 'client')
+            compact('reports', 'client', 'reportType', 'paymentReportColumns', 'paymentSummary')
         );
     }
 }

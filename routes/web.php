@@ -137,18 +137,13 @@ Route::middleware('auth')->group(function () {
 
     Route::delete(
         '/admin/reports/date/{date}',
-        function ($date) {
-
-            $deleted = DailyReport::whereDate('dt', $date)->delete();
-
-            return redirect()
-                ->route('admin.reports')
-                ->with(
-                    'success',
-                    "{$deleted} daily report(s) deleted for {$date}."
-                );
-        }
+        [AdminDailyReportController::class, 'destroyByDate']
     )->name('admin.reports.delete.date');
+
+    Route::delete(
+        '/admin/reports/selected',
+        [AdminDailyReportController::class, 'destroySelected']
+    )->name('admin.reports.delete.selected');
 
     // ADMIN - AUDIT LOGS
     Route::get(

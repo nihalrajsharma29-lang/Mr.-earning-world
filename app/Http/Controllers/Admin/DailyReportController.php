@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Admin\BaseController;
 use App\Exports\AdminDailyReportsExport;
 use App\Models\DailyReport;
+use App\Support\PaymentReportColumns;
 use Illuminate\Http\Request;
 
 class DailyReportController extends BaseController
@@ -14,7 +15,10 @@ class DailyReportController extends BaseController
      */
     public function index(Request $request)
     {
-        $query = DailyReport::with(['customer', 'client']);
+        $reportType = $request->input('report_type', 'daily_report');
+
+        $query = DailyReport::with(['customer', 'client'])
+            ->where('report_type', $reportType);
 
         /*
         |--------------------------------------------------------------------------
@@ -62,20 +66,52 @@ class DailyReportController extends BaseController
         */
 
         if ($request->filled('export')) {
-            $export = new AdminDailyReportsExport($query);
+            $export = new AdminDailyReportsExport($query, $reportType);
 
             return $export->download(
                 'admin-daily-reports_'.now()->format('Ymd_His').'.xlsx'
             );
         }
 
-        $reports = $query
-            ->paginate(50)
-            ->withQueryString();
+        $paymentSummary = null;
+        if ($reportType === 'payment_report') {
+            $totalHostFinalRewards = (float) (clone $query)->sum('hosts_final_reward_usd');
+            $agentFeeTotal = (float) (clone $query)->sum('agent_fee_usd');
+            $agentOneTimeBonusTotal = (float) (clone $query)->sum('agent_one_time_bonus_usd');
+            $activeReportIds = (int) (clone $query)
+                ->whereNotNull('host_id')
+                ->distinct()
+                ->count('host_id');
+
+            $paymentSummary = [
+                'total_host_final_rewards' => $totalHostFinalRewards,
+                'agent_fee_total' => $agentFeeTotal,
+                'agent_one_time_bonus_total' => $agentOneTimeBonusTotal,
+                'total_salary' => $agentFeeTotal + $agentOneTimeBonusTotal,
+                'active_report_ids' => $activeReportIds,
+            ];
+        }
+
+        if ($reportType === 'payment_report') {
+            $totalRows = (int) (clone $query)->count();
+            $perPage = max($totalRows, 1);
+
+            $reports = $query
+                ->paginate($perPage)
+                ->withQueryString();
+        } else {
+            $reports = $query
+                ->paginate(50)
+                ->withQueryString();
+        }
+
+        $paymentReportColumns = $reportType === 'payment_report'
+            ? PaymentReportColumns::definitions()
+            : [];
 
         return view(
             'admin.clients.daily-reports.index',
-            compact('reports')
+            compact('reports', 'reportType', 'paymentReportColumns', 'paymentSummary')
         );
     }
 
@@ -87,17 +123,49 @@ class DailyReportController extends BaseController
     {
         $request->validate([
             'date' => 'required|date',
+            'report_type' => 'nullable|string|in:daily_report,payment_report,payment_status,violation_records',
         ]);
 
         $date = $request->date;
+        $reportType = $request->report_type;
 
-        $deleted = DailyReport::whereDate('dt', $date)->delete();
+        $query = DailyReport::whereDate('dt', $date);
+
+        if ($reportType) {
+            $query->where('report_type', $reportType);
+        }
+
+        $deleted = $query->delete();
 
         return redirect()
-            ->route('admin.reports', ['date' => $date])
+            ->route('admin.reports', ['date' => $date, 'report_type' => $reportType])
             ->with(
                 'success',
-                "{$deleted} daily report(s) deleted for {$date}."
+                "{$deleted} report(s) deleted for {$date}."
             );
+    }
+
+    /**
+     * Delete selected reports by row ids.
+     */
+    public function destroySelected(Request $request)
+    {
+        $validated = $request->validate([
+            'report_ids' => 'required|array|min:1',
+            'report_ids.*' => 'integer|exists:daily_reports,id',
+            'report_type' => 'nullable|string|in:daily_report,payment_report,payment_status,violation_records',
+        ]);
+
+        $reportType = $validated['report_type'] ?? 'payment_report';
+        $reportIds = $validated['report_ids'];
+
+        $deleted = DailyReport::query()
+            ->whereIn('id', $reportIds)
+            ->where('report_type', $reportType)
+            ->delete();
+
+        return redirect()
+            ->route('admin.reports', ['report_type' => $reportType])
+            ->with('success', "{$deleted} selected report(s) deleted.");
     }
 }

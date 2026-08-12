@@ -9,27 +9,22 @@ use Illuminate\Support\Facades\Auth;
 
 class CustomerController extends BaseController
 {
+    private const ALLOWED_COUNTRIES = [
+        'India',
+        'Nigeria',
+        'Morocco',
+        'Thailand',
+        'Philippines',
+        'Malaysia',
+        'Vietnam',
+    ];
+
     /**
      * Show Add Host form.
      */
     public function create()
     {
-        $countries = [
-            'Afghanistan','Albania','Algeria','Andorra','Angola','Antigua and Barbuda','Argentina','Armenia','Australia','Austria','Azerbaijan',
-            'Bahamas','Bahrain','Bangladesh','Barbados','Belarus','Belgium','Belize','Benin','Bhutan','Bolivia','Bosnia and Herzegovina','Botswana','Brazil','Brunei','Bulgaria','Burkina Faso','Burundi',
-            'Cabo Verde','Cambodia','Cameroon','Canada','Central African Republic','Chad','Chile','China','Colombia','Comoros','Congo (Congo-Brazzaville)','Costa Rica','Côte d’Ivoire','Croatia','Cuba','Cyprus','Czechia',
-            'Democratic Republic of the Congo','Denmark','Djibouti','Dominica','Dominican Republic','Ecuador','Egypt','El Salvador','Equatorial Guinea','Eritrea','Estonia','Eswatini','Ethiopia',
-            'Fiji','Finland','France','Gabon','Gambia','Georgia','Germany','Ghana','Greece','Grenada','Guatemala','Guinea','Guinea-Bissau','Guyana',
-            'Haiti','Honduras','Hungary','Iceland','India','Indonesia','Iran','Iraq','Ireland','Israel','Italy',
-            'Jamaica','Japan','Jordan','Kazakhstan','Kenya','Kiribati','Kuwait','Kyrgyzstan',
-            'Laos','Latvia','Lebanon','Lesotho','Liberia','Libya','Liechtenstein','Lithuania','Luxembourg',
-            'Madagascar','Malawi','Malaysia','Maldives','Mali','Malta','Marshall Islands','Mauritania','Mauritius','Mexico','Micronesia','Moldova','Monaco','Mongolia','Montenegro','Morocco','Mozambique','Myanmar',
-            'Namibia','Nauru','Nepal','Netherlands','New Zealand','Nicaragua','Niger','Nigeria','North Korea','North Macedonia','Norway',
-            'Oman','Pakistan','Palau','Panama','Papua New Guinea','Paraguay','Peru','Philippines','Poland','Portugal',
-            'Qatar','Romania','Russia','Rwanda','Saint Kitts and Nevis','Saint Lucia','Saint Vincent and the Grenadines','Samoa','San Marino','Sao Tome and Principe','Saudi Arabia','Senegal','Serbia','Seychelles','Sierra Leone','Singapore','Slovakia','Slovenia','Solomon Islands','Somalia','South Africa','South Korea','South Sudan','Spain','Sri Lanka','Sudan','Suriname','Sweden','Switzerland','Syria',
-            'Tajikistan','Tanzania','Thailand','Timor-Leste','Togo','Tonga','Trinidad and Tobago','Tunisia','Turkey','Turkmenistan','Tuvalu',
-            'Uganda','Ukraine','United Arab Emirates','United Kingdom','United States of America','Uruguay','Uzbekistan','Vanuatu','Vatican City','Venezuela','Vietnam','Yemen','Zambia','Zimbabwe'
-        ];
+        $countries = self::ALLOWED_COUNTRIES;
 
         return view('client.hosts.create', compact('countries'));
     }
@@ -40,8 +35,8 @@ class CustomerController extends BaseController
     public function store(Request $request)
     {
         $request->validate([
-            'customer_id' => 'required|string|unique:customers,customer_id',
-            'country' => 'required|string|max:255',
+            'customer_ids' => 'required|string',
+            'country' => 'required|string|in:'.implode(',', self::ALLOWED_COUNTRIES),
         ]);
 
         $user = Auth::user();
@@ -53,18 +48,70 @@ class CustomerController extends BaseController
             abort(403, 'Client profile not found.');
         }
 
-        // Since the UI only collects Host ID and Country, set `name` to Host ID to satisfy DB constraints.
-        Customer::create([
-            'client_id' => $client->id,
-            'customer_id' => $request->customer_id,
-            'name' => $request->customer_id,
-            'country' => $request->country,
-            'status' => 'Active',
-            'approval_status' => 'pending',
-        ]);
+        $rawIds = preg_split('/[\r\n,]+/', $request->customer_ids) ?: [];
+        $parsedIds = collect($rawIds)
+            ->map(fn ($id) => trim((string) $id))
+            ->filter()
+            ->values();
+
+        $uniqueIds = $parsedIds->unique()->values();
+
+        if ($uniqueIds->isEmpty()) {
+            return redirect()
+                ->route('client.hosts.create')
+                ->withErrors(['customer_ids' => 'Please enter at least one valid Host ID.'])
+                ->withInput();
+        }
+
+        if ($uniqueIds->count() > 50) {
+            return redirect()
+                ->route('client.hosts.create')
+                ->withErrors(['customer_ids' => 'You can add up to 50 Host IDs at once.'])
+                ->withInput();
+        }
+
+        $existingIds = Customer::query()
+            ->whereIn('customer_id', $uniqueIds)
+            ->pluck('customer_id')
+            ->all();
+
+        $existingMap = array_fill_keys($existingIds, true);
+        $createdCount = 0;
+        $skippedCount = 0;
+
+        foreach ($uniqueIds as $hostId) {
+            if (isset($existingMap[$hostId])) {
+                $skippedCount++;
+                continue;
+            }
+
+            // Since the UI only collects Host ID and Country, set `name` to Host ID to satisfy DB constraints.
+            Customer::create([
+                'client_id' => $client->id,
+                'customer_id' => $hostId,
+                'name' => $hostId,
+                'country' => $request->country,
+                'status' => 'Active',
+                'approval_status' => 'pending',
+            ]);
+
+            $createdCount++;
+        }
+
+        if ($createdCount === 0) {
+            return redirect()
+                ->route('client.hosts.create')
+                ->withErrors(['customer_ids' => 'All provided Host IDs already exist.'])
+                ->withInput();
+        }
+
+        $message = "{$createdCount} host(s) submitted successfully for approval.";
+        if ($skippedCount > 0) {
+            $message .= " {$skippedCount} duplicate ID(s) were skipped.";
+        }
 
         return redirect()
             ->route('client.hosts.create')
-            ->with('success', 'Host submitted successfully for approval.');
+            ->with('success', $message);
     }
 }

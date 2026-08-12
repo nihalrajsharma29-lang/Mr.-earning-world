@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Admin - Import Daily Reports')
-@section('page-heading', 'Import Daily Reports')
+@section('title', 'Admin - Import Reports')
+@section('page-heading', 'Import Reports')
 
 @push('styles')
 <style>
@@ -13,7 +13,7 @@
     .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
     .form-group { margin-bottom: 20px; }
     .form-group label { display: block; margin-bottom: 8px; font-weight: 700; color: #111827; }
-    input[type="file"] { width: 100%; padding: 14px 12px; border: 1px solid #d1d5db; border-radius: 12px; background: #ffffff; }
+    input[type="file"], select { width: 100%; padding: 14px 12px; border: 1px solid #d1d5db; border-radius: 12px; background: #ffffff; }
     .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
     .btn-primary { background: #2563eb; color: white; border: none; border-radius: 12px; padding: 12px 22px; cursor: pointer; font-weight: 700; }
     .btn-secondary { display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; padding: 12px 20px; border: 1px solid #e5e7eb; background: #f9fafb; color: #111827; text-decoration: none; font-weight: 700; }
@@ -23,8 +23,8 @@
 
 @section('content')
     <div class="import-card">
-        <h1>📥 Import Daily Reports</h1>
-        <p>Upload Excel data for daily host reports. Supported formats: XLSX, XLS, CSV.</p>
+        <h1>📥 Import Reports</h1>
+        <p>Upload Excel data for the selected report type. Supported formats: XLSX, XLS, CSV.</p>
 
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
@@ -47,6 +47,17 @@
 
         <form action="{{ route('admin.daily.import.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
+
+            <div class="form-group">
+                <label for="report_type">Report Type</label>
+                <select name="report_type" id="report_type" required>
+                    <option value="" {{ old('report_type') ? '' : 'selected' }} disabled>Select Report Type</option>
+                    <option value="daily_report" {{ old('report_type') === 'daily_report' ? 'selected' : '' }}>Daily Report</option>
+                    <option value="payment_report" {{ old('report_type') === 'payment_report' ? 'selected' : '' }}>Payment Report</option>
+                    <option value="payment_status" {{ old('report_type') === 'payment_status' ? 'selected' : '' }}>Payment Status</option>
+                    <option value="violation_records" {{ old('report_type') === 'violation_records' ? 'selected' : '' }}>Violation Records</option>
+                </select>
+            </div>
 
             <div class="form-group">
                 <label for="file">Select Excel File</label>

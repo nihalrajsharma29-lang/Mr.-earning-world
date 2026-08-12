@@ -10,12 +10,16 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
 class DailyReportImport implements
     ToModel,
     WithHeadingRow,
     WithChunkReading
 {
+    private int $importedRows = 0;
+    private int $skippedRows = 0;
+
     /*
     |--------------------------------------------------------------------------
     | Client
@@ -28,10 +32,12 @@ class DailyReportImport implements
      * or an optional `client_id`/`clientid` column in the sheet.
      */
     private ?int $clientId = null;
+    private string $reportType = 'daily_report';
 
-    public function __construct(?int $clientId = null)
+    public function __construct(?int $clientId = null, string $reportType = 'daily_report')
     {
         $this->clientId = $clientId;
+        $this->reportType = $this->normalizeReportType($reportType);
     }
 
     /*
@@ -49,13 +55,13 @@ class DailyReportImport implements
         |--------------------------------------------------------------------------
         */
 
-        $hostId = trim((string) ($this->value(
+        $hostId = $this->normalizeHostId((string) ($this->value(
             $row,
-            ['hostid', 'host_id', 'host id', 'host']
+            ['hostid', 'host_id', 'host id', 'host', 'id']
         ) ?? ''));
 
         if ($hostId === '') {
-            return null;
+            return $this->markSkipped();
         }
 
 
@@ -70,8 +76,18 @@ class DailyReportImport implements
             ['dt', 'date', 'report_date', 'report date', 'reportdate']
         );
 
+        // Payment report sheets often provide Group Time instead of a Date column.
         if ($reportDateValue === null) {
-            return null;
+            $reportDateValue = $this->value($row, ['grouptime', 'group time']);
+        }
+
+        // As a last fallback for payment report, keep the row importable.
+        if ($reportDateValue === null && $this->reportType === 'payment_report') {
+            $reportDateValue = now()->format('Y-m-d');
+        }
+
+        if ($reportDateValue === null) {
+            return $this->markSkipped();
         }
 
         try {
@@ -80,7 +96,7 @@ class DailyReportImport implements
 
         } catch (\Throwable $e) {
 
-            return null;
+            return $this->markSkipped();
         }
 
 
@@ -98,9 +114,13 @@ class DailyReportImport implements
             $detectedClientId = $this->clientId;
         }
 
+        if (! $customer && $this->reportType === 'payment_report') {
+            return $this->markSkipped();
+        }
+
         if (! $customer) {
             if (! $detectedClientId) {
-                return null; // Cannot import a host without a known client.
+                return $this->markSkipped(); // Cannot import a host without a known client.
             }
 
             $customer = Customer::create([
@@ -108,7 +128,7 @@ class DailyReportImport implements
                 'client_id' => $detectedClientId,
                 'name' => $this->value($row, 'username') ?? $hostId,
                 'username' => $this->value($row, 'username') ?? $hostId,
-                'category' => $this->value($row, 'category'),
+                'category' => $this->value($row, ['category', 'categories']),
                 'status' => 'Active',
                 'approval_status' => 'approved',
             ]);
@@ -123,6 +143,11 @@ class DailyReportImport implements
 
         if (empty($customer->client_id) && $detectedClientId) {
             $customer->update(['client_id' => $detectedClientId]);
+        }
+
+        $country = $this->value($row, ['country', 'hostcountry', 'host country']);
+        if (empty($customer->country) && $country) {
+            $customer->update(['country' => $country]);
         }
 
 
@@ -143,18 +168,20 @@ class DailyReportImport implements
             [
                 'customer_id' => $customer->id,
                 'dt' => $reportDate,
+                'report_type' => $this->reportType,
             ],
             [
 
                 'client_id' => $customer->client_id,
+                'report_type' => $this->reportType,
 
                 'host_id' => $hostId,
 
                 'group_name' =>
-                    $this->value($row, 'groupname'),
+                    $this->value($row, ['groupname', 'group']),
 
                 'user_name' =>
-                    $this->value($row, 'username'),
+                    $this->value($row, ['username', 'user name']),
 
                 'story_status' =>
                     $this->value($row, 'storystatus'),
@@ -194,6 +221,23 @@ class DailyReportImport implements
                 'total_coins' =>
                     $this->number(
                         $row['totalcoins'] ?? 0
+                    ),
+
+                'salary_amount' =>
+                    $this->decimal(
+                        $row['salaryamount'] ?? $row['salary'] ?? 0
+                    ),
+
+                'salary_status' =>
+                    $this->value(
+                        $row,
+                        ['salaystatus', 'salarystatus', 'salary_status', 'salary status']
+                    ),
+
+                'violation_records' =>
+                    $this->value(
+                        $row,
+                        ['violationrecords', 'violation records', 'violations', 'violation']
                     ),
 
 
@@ -247,7 +291,7 @@ class DailyReportImport implements
                 'category' =>
                     $this->value(
                         $row,
-                        'category'
+                        ['category', 'categories']
                     ),
 
 
@@ -331,6 +375,137 @@ class DailyReportImport implements
                         $row['previousweek3totalcoins'] ?? 0
                     ),
 
+                'weekly_total_coins_before_leftover' =>
+                    $this->decimal(
+                        $this->value(
+                            $row,
+                            [
+                                'weeklytotalcoinsbefleftover',
+                                'weekly total coins bef leftover',
+                            ]
+                        ) ?? 0
+                    ),
+
+                'weekly_final_coins_hosts' =>
+                    $this->decimal(
+                        $this->value(
+                            $row,
+                            [
+                                'weeklyfinalcoinshosts',
+                                'weekly final coinshosts',
+                            ]
+                        ) ?? 0
+                    ),
+
+                'weekly_reward_base_usd_before_strike_hosts' =>
+                    $this->decimal(
+                        $this->value(
+                            $row,
+                            [
+                                'weeklyrewardbaseusdbeforestrikehosts',
+                                'weekly reward baseusd before strike hosts',
+                            ]
+                        ) ?? 0
+                    ),
+
+                'screenshot_strike' =>
+                    $this->number(
+                        $this->value($row, ['screenshotstrike', 'screenshot strike']) ?? 0
+                    ),
+
+                'message_strike' =>
+                    $this->number(
+                        $this->value($row, ['messagestrike', 'message strike']) ?? 0
+                    ),
+
+                'weekly_reward_base_usd_hosts' =>
+                    $this->decimal(
+                        $this->value(
+                            $row,
+                            [
+                                'weeklyrewardbaseusdhosts',
+                                'weekly reward base usd hosts',
+                            ]
+                        ) ?? 0
+                    ),
+
+                'hosts_ranking_bonus_world_usd' =>
+                    $this->decimal(
+                        $this->value(
+                            $row,
+                            [
+                                'hostsrankingbonusworldusd',
+                                'hosts ranking bonus world usd',
+                            ]
+                        ) ?? 0
+                    ),
+
+                'hosts_ranking_bonus_country_usd' =>
+                    $this->decimal(
+                        $this->value(
+                            $row,
+                            [
+                                'hostsrankingbonuscountryusd',
+                                'hosts ranking bonus country usd',
+                            ]
+                        ) ?? 0
+                    ),
+
+                'br_co_bonus_usd' =>
+                    $this->decimal(
+                        $this->value(
+                            $row,
+                            [
+                                'brcobonususd',
+                                'br co bonus usd',
+                            ]
+                        ) ?? 0
+                    ),
+
+                'daily_rank_bonus_260803_260809' =>
+                    $this->decimal(
+                        $this->value(
+                            $row,
+                            [
+                                'dailyrankbonus260803260809',
+                                'daily rank bonus 260803260809',
+                            ]
+                        ) ?? 0
+                    ),
+
+                'hosts_final_reward_usd' =>
+                    $this->decimal(
+                        $this->value(
+                            $row,
+                            [
+                                'hostsfinalrewardusd',
+                                'hosts final reward usd',
+                            ]
+                        ) ?? 0
+                    ),
+
+                'agent_fee_usd' =>
+                    $this->decimal(
+                        $this->value(
+                            $row,
+                            [
+                                'agentfeeusd',
+                                'agent feeusd',
+                            ]
+                        ) ?? 0
+                    ),
+
+                'agent_one_time_bonus_usd' =>
+                    $this->decimal(
+                        $this->value(
+                            $row,
+                            [
+                                'agentonetimebonususd',
+                                'agent one time bonus usd',
+                            ]
+                        ) ?? 0
+                    ),
+
 
                 /*
                 |--------------------------------------------------------------------------
@@ -341,7 +516,62 @@ class DailyReportImport implements
                 'payment_platform' =>
                     $this->value(
                         $row,
-                        'paymentplatform'
+                        [
+                            'paymentplatform',
+                            'platform',
+                        ]
+                    ),
+
+                'payment_account_name_unique' =>
+                    $this->value(
+                        $row,
+                        [
+                            'isthepaymentaccountnameunique',
+                            'paymentaccountnameunique',
+                        ]
+                    ),
+
+                'if_phone_new' =>
+                    $this->value(
+                        $row,
+                        [
+                            'ifphonesnew',
+                            'if phone new',
+                        ]
+                    ),
+
+                'bind_payment_account' =>
+                    $this->value(
+                        $row,
+                        [
+                            'whethershebindthepaymentaccount',
+                            'bindpaymentaccount',
+                        ]
+                    ),
+
+                'has_been_host_before' =>
+                    $this->value(
+                        $row,
+                        [
+                            'whethershehasbeenhostbefore',
+                            'hasbeenhostbefore',
+                        ]
+                    ),
+
+                'reward_one_time_bonus_before_by_host_id' =>
+                    $this->decimal(
+                        $this->value(
+                            $row,
+                            [
+                                'rewardonetimebonusbeforebyhostid',
+                                'reward one time bonus before by host id',
+                            ]
+                        ) ?? 0
+                    ),
+
+                'average_call' =>
+                    $this->decimal(
+                        $this->value($row, ['averagecall', 'average call']) ?? 0
                     ),
 
 
@@ -381,6 +611,24 @@ class DailyReportImport implements
             ]
         );
 
+        $this->importedRows++;
+
+        return null;
+    }
+
+    public function getImportedRows(): int
+    {
+        return $this->importedRows;
+    }
+
+    public function getSkippedRows(): int
+    {
+        return $this->skippedRows;
+    }
+
+    private function markSkipped()
+    {
+        $this->skippedRows++;
 
         return null;
     }
@@ -446,6 +694,36 @@ class DailyReportImport implements
         );
     }
 
+    private function normalizeHostId(string $value): string
+    {
+        $value = trim($value);
+
+        if ($value === '') {
+            return '';
+        }
+
+        $value = str_replace([',', ' '], '', $value);
+
+        // Excel often exports integer IDs as 12345.0
+        if (preg_match('/^\d+\.0+$/', $value) === 1) {
+            $value = strstr($value, '.', true);
+        }
+
+        return $value;
+    }
+
+    private function normalizeReportType(string $reportType): string
+    {
+        $reportType = strtolower(str_replace(' ', '_', trim($reportType)));
+
+        return match ($reportType) {
+            'payment_report',
+            'payment_status',
+            'violation_records' => $reportType,
+            default => 'daily_report',
+        };
+    }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -455,15 +733,14 @@ class DailyReportImport implements
 
     private function number($value): int
     {
-        if (
-            $value === null ||
-            $value === ''
-        ) {
+        $numericValue = $this->numeric($value);
+
+        if ($numericValue === null) {
             return 0;
         }
 
         return (int) round(
-            (float) $value
+            $numericValue
         );
     }
 
@@ -476,14 +753,36 @@ class DailyReportImport implements
 
     private function decimal($value): float
     {
-        if (
-            $value === null ||
-            $value === ''
-        ) {
+        $numericValue = $this->numeric($value);
+
+        if ($numericValue === null) {
             return 0;
         }
 
-        return (float) $value;
+        return $numericValue;
+    }
+
+    private function numeric($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        $normalized = trim((string) $value);
+        $normalized = str_replace([',', '$', '₹', ' '], '', $normalized);
+
+        // Keep digits, decimal dot and minus only.
+        $normalized = preg_replace('/[^0-9.\-]/', '', $normalized);
+
+        if ($normalized === '' || $normalized === '-' || $normalized === '.') {
+            return null;
+        }
+
+        return is_numeric($normalized) ? (float) $normalized : null;
     }
 
 
@@ -542,6 +841,30 @@ class DailyReportImport implements
             }
         }
 
+        // Fallback: if there is exactly one client in the system,
+        // map imports to that client when sheet/client mapping is missing.
+        if ($this->clientId) {
+            return $this->clientId;
+        }
+
+        $clientCount = Client::count();
+        if ($clientCount === 1) {
+            $singleClient = Client::query()->select('id')->first();
+
+            if ($singleClient) {
+                return (int) $singleClient->id;
+            }
+        }
+
+        // Practical fallback: some payment sheets do not contain client columns.
+        // In that case, use the first client so rows are not skipped silently.
+        if ($this->reportType === 'payment_report') {
+            $fallbackClientId = Client::query()->orderBy('id')->value('id');
+            if ($fallbackClientId) {
+                return (int) $fallbackClientId;
+            }
+        }
+
         return null;
     }
 
@@ -563,6 +886,17 @@ class DailyReportImport implements
             );
         }
 
+        // Excel date serial fallback (common in imported xlsx/csv data).
+        if (is_numeric($value)) {
+            try {
+                return Carbon::instance(
+                    ExcelDate::excelToDateTimeObject((float) $value)
+                )->format('Y-m-d');
+            } catch (\Throwable $e) {
+                // Continue with Carbon parse fallback below.
+            }
+        }
+
         return Carbon::parse($value)
             ->format('Y-m-d');
     }
@@ -581,6 +915,16 @@ class DailyReportImport implements
             $value === ''
         ) {
             return null;
+        }
+
+        if (is_numeric($value)) {
+            try {
+                return Carbon::instance(
+                    ExcelDate::excelToDateTimeObject((float) $value)
+                )->format('Y-m-d H:i:s');
+            } catch (\Throwable $e) {
+                // Continue with Carbon parse fallback below.
+            }
         }
 
         try {

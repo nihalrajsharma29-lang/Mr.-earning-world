@@ -220,17 +220,17 @@
                     <thead>
                         <tr>
                             <th>Host ID</th>
-                            <th>Host Name</th>
+                            <th>Country</th>
+                            <th>Submitted Date</th>
                             <th>Status</th>
-                            <th>Coins</th>
-                            <th>Salary</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach(auth()->user()->client->customers as $host)
                             <tr>
                                 <td>{{ $host->customer_id ?? '-' }}</td>
-                                <td><strong>{{ $host->name }}</strong></td>
+                                <td>{{ $host->country ?? '-' }}</td>
+                                <td>{{ $host->created_at?->format('d M Y') ?? '-' }}</td>
                                 <td>
                                     @if($host->approval_status === 'approved')
                                         <span class="badge badge-approved">Approved</span>
@@ -240,8 +240,6 @@
                                         <span class="badge badge-pending">Pending</span>
                                     @endif
                                 </td>
-                                <td>0</td>
-                                <td>₹0</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -270,16 +268,28 @@
                     <div class="action-description">Submit a new host for approval.</div>
                 </a>
 
-                <a href="{{ route('client.hosts.audit') }}" class="action">
-                    <div class="action-icon">🔍</div>
-                    <div class="action-title">Host Audit</div>
-                    <div class="action-description">View approval status for all hosts.</div>
-                </a>
-
                 <a href="{{ route('client.daily.reports') }}" class="action">
                     <div class="action-icon">📅</div>
                     <div class="action-title">Daily Reports</div>
                     <div class="action-description">Browse host performance reports.</div>
+                </a>
+
+                <a href="{{ route('client.daily.reports', ['report_type' => 'payment_report']) }}" class="action">
+                    <div class="action-icon">💰</div>
+                    <div class="action-title">Payment Report</div>
+                    <div class="action-description">Open host payment report data.</div>
+                </a>
+
+                <a href="{{ route('client.daily.reports', ['report_type' => 'payment_status']) }}" class="action">
+                    <div class="action-icon">💳</div>
+                    <div class="action-title">Payment Status</div>
+                    <div class="action-description">Check payment status entries.</div>
+                </a>
+
+                <a href="{{ route('client.daily.reports', ['report_type' => 'violation_records']) }}" class="action">
+                    <div class="action-icon">⚠️</div>
+                    <div class="action-title">Violation Records</div>
+                    <div class="action-description">Review violation-related reports.</div>
                 </a>
             </div>
         </div>

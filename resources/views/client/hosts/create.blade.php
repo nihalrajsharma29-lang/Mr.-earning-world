@@ -10,7 +10,7 @@
     .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
     .field { display: flex; flex-direction: column; gap: 8px; }
     label { font-weight: 700; color: #111827; }
-    input, textarea { border: 1px solid #d1d5db; border-radius: 12px; padding: 14px; font-size: 15px; }
+    input, textarea, select { border: 1px solid #d1d5db; border-radius: 12px; padding: 14px; font-size: 15px; }
     textarea { min-height: 128px; resize: vertical; }
     .actions { display: flex; gap: 12px; flex-wrap: wrap; }
     .btn-primary { background: #2563eb; color: white; padding: 14px 22px; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; }
@@ -25,7 +25,7 @@
 @section('content')
     <div class="form-card">
         <h1>Add a New Host</h1>
-        <p class="subtitle">Submit host details to request approval from the admin team.</p>
+        <p class="subtitle">Submit one or multiple host IDs to request approval from the admin team.</p>
 
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
@@ -46,8 +46,8 @@
             @csrf
             <div class="form-grid">
                 <div class="field">
-                    <label>Host ID <span style="color:#ef4444">*</span></label>
-                    <input type="text" name="customer_id" value="{{ old('customer_id') }}" placeholder="Enter Host ID" required>
+                    <label>Host IDs <span style="color:#ef4444">*</span></label>
+                    <textarea name="customer_ids" placeholder="Enter Host IDs (comma or new line separated)&#10;Example: 1001, 1002, 1003" required>{{ old('customer_ids') }}</textarea>
                 </div>
                 <div class="field">
                     <label>Country <span style="color:#ef4444">*</span></label>
@@ -61,7 +61,7 @@
             </div>
 
             <div class="actions" style="margin-top: 24px;">
-                <button type="submit" class="btn-primary">Submit Host</button>
+                <button type="submit" class="btn-primary">Submit Hosts</button>
                 <a href="{{ route('client.dashboard') }}" class="btn-secondary">Back to Dashboard</a>
             </div>
         </form>

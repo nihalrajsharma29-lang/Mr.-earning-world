@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\DailyReport;
+use App\Support\PaymentReportColumns;
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
@@ -15,10 +16,12 @@ class AdminDailyReportsExport implements FromQuery, WithHeadings, WithMapping, S
     use Exportable;
 
     private Builder $query;
+    private string $reportType;
 
-    public function __construct(Builder $query)
+    public function __construct(Builder $query, string $reportType = 'daily_report')
     {
         $this->query = $query->latest('dt');
+        $this->reportType = $reportType;
     }
 
     public function query()
@@ -28,8 +31,25 @@ class AdminDailyReportsExport implements FromQuery, WithHeadings, WithMapping, S
 
     public function map($report): array
     {
+        if ($this->reportType === 'payment_report') {
+            return collect(PaymentReportColumns::definitions())
+                ->map(function (array $column) use ($report) {
+                    $value = $column['key'] === 'client_name_uid'
+                        ? trim(($report->client?->name ?? '-') . ' / ' . ($report->client_id ?? '-'))
+                        : data_get($report, $column['key']);
+
+                    if ($column['key'] === 'group_time') {
+                        return $report->group_time?->format('Y-m-d H:i:s') ?? '';
+                    }
+
+                    return $value ?? '';
+                })
+                ->all();
+        }
+
         return [
             $report->dt?->format('Y-m-d') ?? '',
+            $report->report_type,
             $report->host_id,
             trim(($report->client?->name ?? '') . ' / ' . ($report->client_id ?? '')),
             $report->user_name,
@@ -50,7 +70,6 @@ class AdminDailyReportsExport implements FromQuery, WithHeadings, WithMapping, S
             $report->avg_friend_call_duration_s30d,
             $report->total_call_duration_m,
             $report->bank_country,
-            $report->if_bind_bank_info,
             $report->if_active,
             $report->current_week_total_coins,
             $report->previous_week1_total_coins,
@@ -66,8 +85,13 @@ class AdminDailyReportsExport implements FromQuery, WithHeadings, WithMapping, S
 
     public function headings(): array
     {
+        if ($this->reportType === 'payment_report') {
+            return PaymentReportColumns::headings();
+        }
+
         return [
             'Date',
+            'Report Type',
             'Host ID',
             'Client Name / UID',
             'Username',
@@ -88,7 +112,6 @@ class AdminDailyReportsExport implements FromQuery, WithHeadings, WithMapping, S
             'Avg. Friend Call Duration (30D)',
             'Total Call Duration (Min)',
             'Bank Country',
-            'Bank Info Bound',
             'Active Status',
             'Current Week Total Coins',
             'Previous Week 1 Total Coins',

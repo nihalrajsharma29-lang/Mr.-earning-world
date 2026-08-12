@@ -532,14 +532,11 @@
             <div class="page-header">
 
                 <h1>
-                    📅 Daily Reports
-                </h1>
+                            {{ request('report_type', 'daily_report') === 'daily_report' ? '📅 Daily Reports' : (request('report_type') === 'payment_report' ? '💰 Payment Report' : (request('report_type') === 'payment_status' ? '💳 Payment Status' : '⚠️ Violation Records')) }}
+                        </h1>
 
-                <p>
-                    Daily working performance of your hosts.
-                </p>
-
-            </div>
+                        <p>
+                            {{ request('report_type', 'daily_report') === 'daily_report' ? 'Daily working performance of your hosts.' : (request('report_type') === 'payment_report' ? 'Payment report data for your hosts.' : (request('report_type') === 'payment_status' ? 'Payment status details for your hosts.' : 'Violation records for your hosts.')) }}
 
 
             {{-- =========================
@@ -586,6 +583,18 @@
 
                 </div>
 
+                <div class="summary-card">
+
+                    <div class="summary-title">
+                        Total Salary This Page
+                    </div>
+
+                    <div class="summary-value">
+                        ₹{{ number_format($reports->sum('salary_amount'), 2) }}
+                    </div>
+
+                </div>
+
 
                 <div class="summary-card">
 
@@ -609,10 +618,11 @@
             <div class="filter-card">
 
                 <form
-                    action="{{ route('client.daily.reports') }}"
+                    action="{{ route('client.daily.reports', ['report_type' => request('report_type', 'daily_report')]) }}"
                     method="GET"
                     class="filter-form"
                 >
+                    <input type="hidden" name="report_type" value="{{ request('report_type', 'daily_report') }}">
 
                     <div class="filter-group">
 
@@ -654,6 +664,14 @@
                         🔎 Search
                     </button>
 
+                    <button
+                        type="submit"
+                        name="export"
+                        value="1"
+                        class="reset-btn"
+                    >
+                        ⬇️ Export to Excel
+                    </button>
 
                     <a
                         href="{{ route('client.daily.reports') }}"
@@ -705,6 +723,9 @@
                                     <th>Task Coins</th>
                                     <th>Box Coins</th>
                                     <th>Total Coins</th>
+                                    <th>Salary Amount</th>
+                                    <th>Salary Status</th>
+                                    <th>Violation Records</th>
 
                                     <th>Group Time</th>
 
@@ -797,6 +818,18 @@
 
                                         <td class="total-coins">
                                             {{ number_format($report->total_coins ?? 0) }}
+                                        </td>
+
+                                        <td>
+                                            ₹{{ number_format($report->salary_amount ?? 0, 2) }}
+                                        </td>
+
+                                        <td>
+                                            {{ $report->salary_status ?? '-' }}
+                                        </td>
+
+                                        <td>
+                                            {{ $report->violation_records ?? '-' }}
                                         </td>
 
 

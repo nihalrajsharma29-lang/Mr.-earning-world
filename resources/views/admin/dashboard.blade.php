@@ -56,14 +56,13 @@
         </h3>
 
         <h1 class="text-4xl font-bold mt-3">
-            {{ \App\Models\DailyReport::count() }}
+            {{ $totalReports ?? \App\Models\DailyReport::count() }}
         </h1>
 
         <p class="text-blue-600 mt-3">
             View Reports →
         </p>
     </a>
-
 
     {{-- Host Management --}}
     <a

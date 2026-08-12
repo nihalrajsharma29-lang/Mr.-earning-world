@@ -1,7 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Admin - Daily Reports')
-@section('page-heading', 'Daily Reports')
+@php
+    $activeReportType = $reportType ?? request('report_type', 'daily_report');
+    $isPaymentReport = $activeReportType === 'payment_report';
+@endphp
+
+@section('title', $isPaymentReport ? 'Admin - Payment Report' : 'Admin - Daily Reports')
+@section('page-heading', $isPaymentReport ? 'Payment Report' : 'Daily Reports')
 
 @push('styles')
 <style>
@@ -39,69 +44,98 @@
 @section('content')
     <div class="panel">
         <div class="panel-body">
-            <div class="panel-title">Daily Reports Overview</div>
+            <div class="panel-title">{{ $isPaymentReport ? 'Payment Reports Overview' : 'Daily Reports Overview' }}</div>
             <p class="panel-text">Search, filter, and manage all host reports submitted across the system. Use the date delete card to remove all reports for a specific date.</p>
         </div>
     </div>
 
     <div class="summary-grid">
         <div class="summary-card">
-            <div class="summary-label">Total Reports</div>
-            <div class="summary-value">{{ $reports->total() }}</div>
+            <div class="summary-label">{{ $isPaymentReport ? 'Total Host Final Rewards' : 'Total Reports' }}</div>
+            <div class="summary-value">
+                @if($isPaymentReport)
+                    ${{ number_format($paymentSummary['total_host_final_rewards'] ?? 0, 2) }}
+                @else
+                    {{ $reports->total() }}
+                @endif
+            </div>
         </div>
 
         <div class="summary-card">
-            <div class="summary-label">Reports on Page</div>
-            <div class="summary-value">{{ $reports->count() }}</div>
+            <div class="summary-label">{{ $isPaymentReport ? 'Agent Fee' : 'Reports on Page' }}</div>
+            <div class="summary-value">
+                @if($isPaymentReport)
+                    ${{ number_format($paymentSummary['agent_fee_total'] ?? 0, 2) }}
+                @else
+                    {{ $reports->count() }}
+                @endif
+            </div>
         </div>
 
         <div class="summary-card">
-            <div class="summary-label">Total Coins</div>
-            <div class="summary-value">{{ number_format($reports->sum('total_coins')) }}</div>
+            <div class="summary-label">{{ $isPaymentReport ? 'Agent One time Bonus' : 'Total Coins' }}</div>
+            <div class="summary-value">
+                @if($isPaymentReport)
+                    ${{ number_format($paymentSummary['agent_one_time_bonus_total'] ?? 0, 2) }}
+                @else
+                    {{ number_format($reports->sum('total_coins')) }}
+                @endif
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-label">Total Salary</div>
+            <div class="summary-value">
+                @if($isPaymentReport)
+                    ${{ number_format($paymentSummary['total_salary'] ?? 0, 2) }}
+                @else
+                    ${{ number_format($reports->sum('salary_amount'), 2) }}
+                @endif
+            </div>
         </div>
 
         <div class="summary-card">
             <div class="summary-label">Active Reports</div>
-            <div class="summary-value">{{ $reports->where('if_active', 'Yes')->count() }}</div>
+            <div class="summary-value">
+                @if($isPaymentReport)
+                    {{ $paymentSummary['active_report_ids'] ?? 0 }}
+                @else
+                    {{ $reports->where('if_active', 'Yes')->count() }}
+                @endif
+            </div>
         </div>
     </div>
 
     <div class="panel">
         <div class="panel-body">
             <div class="panel-title">Search Reports</div>
+            <p class="panel-text">Showing: {{ ucwords(str_replace('_', ' ', request('report_type', 'daily_report'))) }}</p>
             <form action="{{ route('admin.reports') }}" method="GET" class="filter-form">
+                <input type="hidden" name="report_type" value="{{ request('report_type', 'daily_report') }}">
+
                 <div class="filter-group">
                     <label for="search">Host ID / Client Name / UID</label>
                     <input type="text" id="search" name="search" value="{{ request('search') }}" placeholder="Search by host, client name, or UID">
                 </div>
 
-                <div class="filter-group">
-                    <label for="date">Date</label>
-                    <input type="date" id="date" name="date" value="{{ request('date') }}">
-                </div>
+                @unless($isPaymentReport)
+                    <div class="filter-group">
+                        <label for="date">Date</label>
+                        <input type="date" id="date" name="date" value="{{ request('date') }}">
+                    </div>
+                @endunless
 
-                <button type="submit" class="btn btn-primary">🔎 Filter</button>
-                <a href="{{ route('admin.reports') }}" class="btn-secondary">Reset</a>
+                <button type="submit" class="btn btn-primary">🔎 Search</button>
+                <a href="{{ route('admin.reports', ['report_type' => request('report_type', 'daily_report')]) }}" class="btn-secondary">Reset</a>
                 <button type="submit" name="export" value="1" class="btn btn-secondary">⬇️ Export to Excel</button>
+                <button type="button" id="delete-selected-btn" class="btn btn-danger">🗑️ Delete Selected</button>
             </form>
-        </div>
-    </div>
 
-    <div class="panel">
-        <div class="panel-body">
-            <div class="panel-title">Delete Reports By Date</div>
-            <p class="panel-text">Remove all reports for a selected date. This action cannot be undone.</p>
-            <form id="delete-report-form" action="{{ route('admin.reports.delete.date', ['date' => 'DATE_PLACEHOLDER']) }}" method="POST">
+            <form id="bulk-delete-form" action="{{ route('admin.reports.delete.selected') }}" method="POST" style="display:none;">
                 @csrf
                 @method('DELETE')
-                <div class="filter-form">
-                    <div class="filter-group">
-                        <label for="delete_date">Select a date</label>
-                        <input type="date" id="delete_date" required>
-                        <input type="hidden" id="delete_date_input" name="date" value="">
-                    </div>
-                    <button type="submit" class="btn btn-danger">🗑️ Delete Reports</button>
-                </div>
+                <input type="hidden" name="report_type" value="{{ $activeReportType }}">
+                <div id="bulk-delete-inputs"></div>
             </form>
         </div>
     </div>
@@ -111,86 +145,140 @@
             <div class="panel-title">Report Results</div>
             @if($reports->count() > 0)
                 <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Date</th>
-                                <th>Host ID</th>
-                                <th>Client Name / UID</th>
-                                <th>Username</th>
-                                <th>Story Status</th>
-                                <th>Gift Coins</th>
-                                <th>Non-Friend Video Coins</th>
-                                <th>Friend Video Coins</th>
-                                <th>Task Coins</th>
-                                <th>Box Coins</th>
-                                <th>Total Coins</th>
-                                <th>Group Time</th>
-                                <th>Match Count</th>
-                                <th>Match Duration (Min)</th>
-                                <th>App KYC Pass</th>
-                                <th>Profile Video Status</th>
-                                <th>Category</th>
-                                <th>Long Call Ratio</th>
-                                <th>Avg. Friend Call Duration (30D)</th>
-                                <th>Total Call Duration (Min)</th>
-                                <th>Bank Country</th>
-                                <th>Bank Info Bound</th>
-                                <th>Active Status</th>
-                                <th>Current Week Total Coins</th>
-                                <th>Previous Week 1 Total Coins</th>
-                                <th>Previous Week 2 Total Coins</th>
-                                <th>Previous Week 3 Total Coins</th>
-                                <th>Payment Platform</th>
-                                <th>App ID</th>
-                                <th>Live Permission</th>
-                                <th>Start Live Duration (Min)</th>
-                                <th>Live-to-Call Ratio</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($reports as $report)
+                    @if(($reportType ?? request('report_type', 'daily_report')) === 'payment_report')
+                        <table>
+                            <thead>
                                 <tr>
-                                    <td>{{ $reports->firstItem() + $loop->index }}</td>
-                                    <td>{{ $report->dt?->format('d M Y') ?? '-' }}</td>
-                                    <td><strong>{{ $report->host_id ?? '-' }}</strong></td>
-                                    <td>{{ $report->client?->name ?? '-' }} / {{ $report->client_id }}</td>
-                                    <td>{{ $report->user_name ?? '-' }}</td>
-                                    <td>{{ $report->story_status ?? '-' }}</td>
-                                    <td>{{ number_format($report->gift_coins ?? 0) }}</td>
-                                    <td>{{ number_format($report->non_friend_video_coins ?? 0) }}</td>
-                                    <td>{{ number_format($report->friend_video_coins ?? 0) }}</td>
-                                    <td>{{ number_format($report->task_coins ?? 0) }}</td>
-                                    <td>{{ number_format($report->box_coins ?? 0) }}</td>
-                                    <td>{{ number_format($report->total_coins ?? 0) }}</td>
-                                    <td>{{ $report->group_time?->format('Y-m-d H:i:s') ?? '-' }}</td>
-                                    <td>{{ $report->match_count ?? 0 }}</td>
-                                    <td>{{ $report->match_duration_min ?? 0 }}</td>
-                                    <td>{{ $report->app_kyc_pass ?? '-' }}</td>
-                                    <td>{{ $report->profile_video_status ?? '-' }}</td>
-                                    <td>{{ $report->category ?? '-' }}</td>
-                                    <td>{{ $report->long_call_ratio ?? 0 }}</td>
-                                    <td>{{ $report->avg_friend_call_duration_s30d ?? 0 }}</td>
-                                    <td>{{ $report->total_call_duration_m ?? 0 }}</td>
-                                    <td>{{ $report->bank_country ?? '-' }}</td>
-                                    <td>{{ $report->if_bind_bank_info ?? '-' }}</td>
-                                    <td>{{ $report->if_active ?? '-' }}</td>
-                                    <td>{{ number_format($report->current_week_total_coins ?? 0) }}</td>
-                                    <td>{{ number_format($report->previous_week1_total_coins ?? 0) }}</td>
-                                    <td>{{ number_format($report->previous_week2_total_coins ?? 0) }}</td>
-                                    <td>{{ number_format($report->previous_week3_total_coins ?? 0) }}</td>
-                                    <td>{{ $report->payment_platform ?? '-' }}</td>
-                                    <td>{{ $report->app_id ?? '-' }}</td>
-                                    <td>{{ $report->has_live_permission ? 'Yes' : 'No' }}</td>
-                                    <td>{{ $report->start_live_duration_min ?? 0 }}</td>
-                                    <td>{{ $report->live_to_call_ratio ?? 0 }}</td>
+                                    <th><input type="checkbox" id="select-all-reports"></th>
+                                    @foreach($paymentReportColumns as $column)
+                                        <th>{{ $column['label'] }}</th>
+                                    @endforeach
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach($reports as $report)
+                                    <tr>
+                                        <td>
+                                            <input
+                                                type="checkbox"
+                                                class="report-select-checkbox"
+                                                value="{{ $report->id }}"
+                                            >
+                                        </td>
+                                        @foreach($paymentReportColumns as $column)
+                                            @php
+                                                $rawValue = $column['key'] === 'client_name_uid'
+                                                    ? trim(($report->client?->name ?? '-') . ' / ' . ($report->client_id ?? '-'))
+                                                    : data_get($report, $column['key']);
+                                                $type = $column['type'] ?? 'text';
+                                            @endphp
+
+                                            @if($type === 'currency')
+                                                <td>${{ number_format((float) ($rawValue ?? 0), 2) }}</td>
+                                            @elseif($type === 'decimal')
+                                                <td>{{ rtrim(rtrim(number_format((float) ($rawValue ?? 0), 6, '.', ''), '0'), '.') }}</td>
+                                            @elseif($type === 'integer')
+                                                <td>{{ number_format((int) ($rawValue ?? 0)) }}</td>
+                                            @elseif($type === 'datetime')
+                                                <td>{{ $rawValue ? \Illuminate\Support\Carbon::parse($rawValue)->format('Y-m-d H:i:s') : '-' }}</td>
+                                            @else
+                                                <td>{{ $rawValue !== null && $rawValue !== '' ? $rawValue : '-' }}</td>
+                                            @endif
+                                        @endforeach
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @else
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="select-all-reports"></th>
+                                    <th>#</th>
+                                    <th>Date</th>
+                                    <th>Host ID</th>
+                                    <th>Client Name / UID</th>
+                                    <th>Username</th>
+                                    <th>Story Status</th>
+                                    <th>Gift Coins</th>
+                                    <th>Non-Friend Video Coins</th>
+                                    <th>Friend Video Coins</th>
+                                    <th>Task Coins</th>
+                                    <th>Box Coins</th>
+                                    <th>Total Coins</th>
+                                    <th>Group Time</th>
+                                    <th>Match Count</th>
+                                    <th>Match Duration (Min)</th>
+                                    <th>App KYC Pass</th>
+                                    <th>Profile Video Status</th>
+                                    <th>Category</th>
+                                    <th>Long Call Ratio</th>
+                                    <th>Avg. Friend Call Duration (30D)</th>
+                                    <th>Total Call Duration (Min)</th>
+                                    <th>Bank Country</th>
+                                    <th>Active Status</th>
+                                    <th>Current Week Total Coins</th>
+                                    <th>Previous Week 1 Total Coins</th>
+                                    <th>Previous Week 2 Total Coins</th>
+                                    <th>Previous Week 3 Total Coins</th>
+                                    <th>Payment Platform</th>
+                                    <th>App ID</th>
+                                    <th>Live Permission</th>
+                                    <th>Start Live Duration (Min)</th>
+                                    <th>Live-to-Call Ratio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($reports as $report)
+                                    <tr>
+                                        <td>
+                                            <input
+                                                type="checkbox"
+                                                class="report-select-checkbox"
+                                                value="{{ $report->id }}"
+                                            >
+                                        </td>
+                                        <td>{{ $reports->firstItem() + $loop->index }}</td>
+                                        <td>{{ $report->dt?->format('d M Y') ?? '-' }}</td>
+                                        <td><strong>{{ $report->host_id ?? '-' }}</strong></td>
+                                        <td>{{ $report->client?->name ?? '-' }} / {{ $report->client_id }}</td>
+                                        <td>{{ $report->user_name ?? '-' }}</td>
+                                        <td>{{ $report->story_status ?? '-' }}</td>
+                                        <td>{{ number_format($report->gift_coins ?? 0) }}</td>
+                                        <td>{{ number_format($report->non_friend_video_coins ?? 0) }}</td>
+                                        <td>{{ number_format($report->friend_video_coins ?? 0) }}</td>
+                                        <td>{{ number_format($report->task_coins ?? 0) }}</td>
+                                        <td>{{ number_format($report->box_coins ?? 0) }}</td>
+                                        <td>{{ number_format($report->total_coins ?? 0) }}</td>
+                                        <td>{{ $report->group_time?->format('Y-m-d H:i:s') ?? '-' }}</td>
+                                        <td>{{ $report->match_count ?? 0 }}</td>
+                                        <td>{{ $report->match_duration_min ?? 0 }}</td>
+                                        <td>{{ $report->app_kyc_pass ?? '-' }}</td>
+                                        <td>{{ $report->profile_video_status ?? '-' }}</td>
+                                        <td>{{ $report->category ?? '-' }}</td>
+                                        <td>{{ $report->long_call_ratio ?? 0 }}</td>
+                                        <td>{{ $report->avg_friend_call_duration_s30d ?? 0 }}</td>
+                                        <td>{{ $report->total_call_duration_m ?? 0 }}</td>
+                                        <td>{{ $report->bank_country ?? '-' }}</td>
+                                        <td>{{ $report->if_active ?? '-' }}</td>
+                                        <td>{{ number_format($report->current_week_total_coins ?? 0) }}</td>
+                                        <td>{{ number_format($report->previous_week1_total_coins ?? 0) }}</td>
+                                        <td>{{ number_format($report->previous_week2_total_coins ?? 0) }}</td>
+                                        <td>{{ number_format($report->previous_week3_total_coins ?? 0) }}</td>
+                                        <td>{{ $report->payment_platform ?? '-' }}</td>
+                                        <td>{{ $report->app_id ?? '-' }}</td>
+                                        <td>{{ $report->has_live_permission ? 'Yes' : 'No' }}</td>
+                                        <td>{{ $report->start_live_duration_min ?? 0 }}</td>
+                                        <td>{{ $report->live_to_call_ratio ?? 0 }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @endif
                 </div>
-                <div class="pagination">{{ $reports->withQueryString()->links() }}</div>
+                @unless($isPaymentReport)
+                    <div class="pagination">{{ $reports->withQueryString()->links() }}</div>
+                @endunless
             @else
                 <div class="empty">
                     <div class="empty-icon">📭</div>
@@ -204,15 +292,59 @@
 
 @push('scripts')
 <script>
-    document.getElementById('delete-report-form')?.addEventListener('submit', function (event) {
-        const date = document.getElementById('delete_date').value;
-        if (!date) {
-            event.preventDefault();
-            alert('Please select a date to delete.');
+    const selectAll = document.getElementById('select-all-reports');
+    const rowCheckboxes = document.querySelectorAll('.report-select-checkbox');
+    const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+    const bulkDeleteForm = document.getElementById('bulk-delete-form');
+    const bulkDeleteInputs = document.getElementById('bulk-delete-inputs');
+
+    selectAll?.addEventListener('change', function () {
+        rowCheckboxes.forEach(function (checkbox) {
+            checkbox.checked = selectAll.checked;
+        });
+    });
+
+    rowCheckboxes.forEach(function (checkbox) {
+        checkbox.addEventListener('change', function () {
+            const checkedCount = Array.from(rowCheckboxes).filter(function (cb) {
+                return cb.checked;
+            }).length;
+
+            if (selectAll) {
+                selectAll.checked = checkedCount === rowCheckboxes.length && rowCheckboxes.length > 0;
+            }
+        });
+    });
+
+    deleteSelectedBtn?.addEventListener('click', function () {
+        const selectedIds = Array.from(rowCheckboxes)
+            .filter(function (cb) { return cb.checked; })
+            .map(function (cb) { return cb.value; });
+
+        if (selectedIds.length === 0) {
+            alert('Please select at least one ID to delete.');
             return;
         }
-        this.action = "{{ url('/admin/reports/date') }}" + '/' + date;
-        document.getElementById('delete_date_input').value = date;
+
+        if (!confirm('Delete selected IDs? This action cannot be undone.')) {
+            return;
+        }
+
+        if (!bulkDeleteForm || !bulkDeleteInputs) {
+            return;
+        }
+
+        bulkDeleteInputs.innerHTML = '';
+        selectedIds.forEach(function (id) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'report_ids[]';
+            input.value = id;
+            bulkDeleteInputs.appendChild(input);
+        });
+
+        bulkDeleteForm.submit();
     });
+
 </script>
 @endpush
