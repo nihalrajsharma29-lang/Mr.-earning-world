@@ -45,6 +45,20 @@ class DailyReportImportController extends BaseController
             ],
         ]);
 
+        $fileName = $request->file('file')->getClientOriginalName();
+        $requiredToken = $this->requiredFileNameToken($request->report_type);
+
+        if ($requiredToken && stripos($fileName, $requiredToken) === false) {
+            return redirect()
+                ->route('admin.daily.import')
+                ->with(
+                    'error',
+                    "Invalid file name for "
+                    . ucwords(str_replace('_', ' ', $request->report_type))
+                    . ": file name must contain '{$requiredToken}'."
+                );
+        }
+
         if (
             $request->report_type === 'daily_report' &&
             ! $this->hasDailyReportDateHeader($request->file('file'))
@@ -120,5 +134,16 @@ class DailyReportImportController extends BaseController
     private function normalizeHeader(string $value): string
     {
         return strtolower((string) preg_replace('/[^a-z0-9]+/', '', trim($value)));
+    }
+
+    private function requiredFileNameToken(string $reportType): ?string
+    {
+        return match ($reportType) {
+            'daily_report' => '4280121896',
+            'payment_report' => 'Payment Report',
+            'violation_records' => 'Strike Records',
+            'payment_status' => 'Payment Status',
+            default => null,
+        };
     }
 }
