@@ -6,8 +6,7 @@ use App\Http\Controllers\Admin\BaseController;
 use App\Exports\AdminDailyReportsExport;
 use App\Models\AdminAuditLog;
 use App\Models\DailyReport;
-use App\Support\PaymentReportColumns;
-use App\Support\ViolationReportColumns;
+use App\Support\ReportColumnManager;
 use Illuminate\Http\Request;
 
 class DailyReportController extends BaseController
@@ -30,6 +29,9 @@ class DailyReportController extends BaseController
 
         $query = DailyReport::with(['customer', 'client'])
             ->where('report_type', $reportType);
+
+        $availableColumns = ReportColumnManager::visible($reportType);
+        $allowedColumnKeys = collect($availableColumns)->pluck('key')->all();
 
         /*
         |--------------------------------------------------------------------------
@@ -77,7 +79,7 @@ class DailyReportController extends BaseController
         */
 
         if ($request->filled('export')) {
-            $export = new AdminDailyReportsExport($query, $reportType);
+            $export = new AdminDailyReportsExport($query, $reportType, ReportColumnManager::visible($reportType));
 
             return $export->download(
                 'admin-daily-reports_'.now()->format('Ymd_His').'.xlsx'
@@ -107,17 +109,49 @@ class DailyReportController extends BaseController
             ->latest('dt')
             ->get();
 
+        $filterColumn = in_array($request->input('filter_column'), $allowedColumnKeys, true)
+            ? $request->input('filter_column')
+            : null;
+        $filterValue = trim((string) $request->input('filter_value', ''));
+
+        if ($filterColumn && $filterValue !== '') {
+            $reports = $reports->filter(function ($report) use ($filterColumn, $filterValue) {
+                $value = $filterColumn === 'client_name_uid'
+                    ? trim(($report->client?->name ?? '-') . ' / ' . ($report->client_id ?? '-'))
+                    : $report->columnValue($filterColumn);
+
+                return str_contains(strtolower((string) $value), strtolower($filterValue));
+            })->values();
+        }
+
+        $sortColumn = in_array($request->input('sort_column'), $allowedColumnKeys, true)
+            ? $request->input('sort_column')
+            : null;
+        $sortDirection = $request->input('sort_direction') === 'desc' ? 'desc' : 'asc';
+
+        if ($sortColumn) {
+            $reports = $reports->sortBy(function ($report) use ($sortColumn) {
+                return $sortColumn === 'client_name_uid'
+                    ? trim(($report->client?->name ?? '-') . ' / ' . ($report->client_id ?? '-'))
+                    : $report->columnValue($sortColumn);
+            }, SORT_NATURAL | SORT_FLAG_CASE, $sortDirection === 'desc')->values();
+        }
+
         $paymentReportColumns = $reportType === 'payment_report'
-            ? PaymentReportColumns::definitions()
+            ? ReportColumnManager::visible('payment_report')
             : [];
 
         $violationReportColumns = $reportType === 'violation_records'
-            ? ViolationReportColumns::definitions()
+            ? ReportColumnManager::visible('violation_records')
+            : [];
+
+        $dailyReportColumns = $reportType === 'daily_report'
+            ? ReportColumnManager::visible('daily_report')
             : [];
 
         return view(
             $isManager ? 'manager.reports.index' : 'admin.clients.daily-reports.index',
-            compact('reports', 'reportType', 'paymentReportColumns', 'paymentSummary', 'violationReportColumns')
+            compact('reports', 'reportType', 'paymentReportColumns', 'paymentSummary', 'violationReportColumns', 'dailyReportColumns')
         );
     }
 

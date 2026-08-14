@@ -182,6 +182,21 @@ Route::middleware('auth')->group(function () {
         [AdminDailyReportController::class, 'index']
     )->name('admin.reports');
 
+    Route::get(
+        '/admin/report-columns',
+        [\App\Http\Controllers\Admin\ReportColumnController::class, 'index']
+    )->name('admin.report-columns.index');
+
+    Route::put(
+        '/admin/report-columns',
+        [\App\Http\Controllers\Admin\ReportColumnController::class, 'update']
+    )->name('admin.report-columns.update');
+
+    Route::delete(
+        '/admin/report-columns/{reportColumn}',
+        [\App\Http\Controllers\Admin\ReportColumnController::class, 'destroy']
+    )->name('admin.report-columns.destroy');
+
 
     /*
     |--------------------------------------------------------------------------

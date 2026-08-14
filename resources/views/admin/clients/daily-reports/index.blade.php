@@ -30,7 +30,7 @@
     .table-wrapper { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; min-width: 900px; }
     th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
-    th { background: #f9fafb; color: #6b7280; font-weight: 700; }
+    th { position: sticky; top: 0; z-index: 2; background: #f9fafb; color: #6b7280; font-weight: 700; }
     .badge { display: inline-flex; align-items: center; justify-content: center; padding: 6px 12px; border-radius: 999px; font-weight: 700; font-size: 12px; }
     .badge-approved { background: #dcfce7; color: #166534; }
     .badge-pending { background: #fef3c7; color: #92400e; }
@@ -127,6 +127,26 @@
                     </div>
                 @endunless
 
+                @php
+                    $activeColumns = $isPaymentReport ? $paymentReportColumns : ($isViolationReport ? $violationReportColumns : $dailyReportColumns);
+                @endphp
+                <div class="filter-group">
+                    <label for="sort_column">Sort column</label>
+                    <select id="sort_column" name="sort_column">
+                        <option value="">Default order</option>
+                        @foreach($activeColumns as $column)
+                            <option value="{{ $column['key'] }}" {{ request('sort_column') === $column['key'] ? 'selected' : '' }}>{{ $column['label'] }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="sort_direction">Sort direction</label>
+                    <select id="sort_direction" name="sort_direction">
+                        <option value="asc" {{ request('sort_direction', 'asc') === 'asc' ? 'selected' : '' }}>Low to High / A-Z</option>
+                        <option value="desc" {{ request('sort_direction') === 'desc' ? 'selected' : '' }}>High to Low / Z-A</option>
+                    </select>
+                </div>
+
                 <button type="submit" class="btn btn-primary">🔎 Search</button>
                 <a href="{{ route('admin.reports', ['report_type' => request('report_type', 'daily_report')]) }}" class="btn-secondary">Reset</a>
                 <button type="submit" name="export" value="1" class="btn btn-secondary">⬇️ Export to Excel</button>
@@ -171,7 +191,7 @@
                                             @php
                                                 $rawValue = $column['key'] === 'client_name_uid'
                                                     ? trim(($report->client?->name ?? '-') . ' / ' . ($report->client_id ?? '-'))
-                                                    : data_get($report, $column['key']);
+                                                    : $report->columnValue($column['key']);
                                                 $type = $column['type'] ?? 'text';
                                             @endphp
 
@@ -215,11 +235,13 @@
                                             @php
                                                 $rawValue = $column['key'] === 'client_name_uid'
                                                     ? trim(($report->client?->name ?? '-') . ' / ' . ($report->client_id ?? '-'))
-                                                    : data_get($report, $column['key']);
+                                                    : $report->columnValue($column['key']);
                                                 $type = $column['type'] ?? 'text';
                                             @endphp
 
-                                            @if($type === 'integer')
+                                            @if($type === 'currency')
+                                                <td>${{ number_format((float) ($rawValue ?? 0), 2) }}</td>
+                                            @elseif($type === 'integer')
                                                 <td>{{ number_format((int) ($rawValue ?? 0)) }}</td>
                                             @elseif($type === 'datetime')
                                                 <td>
@@ -245,37 +267,9 @@
                                 <tr>
                                     <th><input type="checkbox" id="select-all-reports"></th>
                                     <th>#</th>
-                                    <th>Date</th>
-                                    <th>Host ID</th>
-                                    <th>Client Name / UID</th>
-                                    <th>Username</th>
-                                    <th>Story Status</th>
-                                    <th>Gift Coins</th>
-                                    <th>Non-Friend Video Coins</th>
-                                    <th>Friend Video Coins</th>
-                                    <th>Task Coins</th>
-                                    <th>Box Coins</th>
-                                    <th>Total Coins</th>
-                                    <th>Group Time</th>
-                                    <th>Match Count</th>
-                                    <th>Match Duration (Min)</th>
-                                    <th>App KYC Pass</th>
-                                    <th>Profile Video Status</th>
-                                    <th>Category</th>
-                                    <th>Long Call Ratio</th>
-                                    <th>Avg. Friend Call Duration (30D)</th>
-                                    <th>Total Call Duration (Min)</th>
-                                    <th>Bank Country</th>
-                                    <th>Active Status</th>
-                                    <th>Current Week Total Coins</th>
-                                    <th>Previous Week 1 Total Coins</th>
-                                    <th>Previous Week 2 Total Coins</th>
-                                    <th>Previous Week 3 Total Coins</th>
-                                    <th>Payment Platform</th>
-                                    <th>App ID</th>
-                                    <th>Live Permission</th>
-                                    <th>Start Live Duration (Min)</th>
-                                    <th>Live-to-Call Ratio</th>
+                                    @foreach($dailyReportColumns as $column)
+                                        <th>{{ $column['label'] }}</th>
+                                    @endforeach
                                 </tr>
                             </thead>
                             <tbody>
@@ -289,37 +283,29 @@
                                             >
                                         </td>
                                         <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $report->dt?->format('d M Y') ?? '-' }}</td>
-                                        <td><strong>{{ $report->host_id ?? '-' }}</strong></td>
-                                        <td>{{ $report->client?->name ?? '-' }} / {{ $report->client_id }}</td>
-                                        <td>{{ $report->user_name ?? '-' }}</td>
-                                        <td>{{ $report->story_status ?? '-' }}</td>
-                                        <td>{{ number_format($report->gift_coins ?? 0) }}</td>
-                                        <td>{{ number_format($report->non_friend_video_coins ?? 0) }}</td>
-                                        <td>{{ number_format($report->friend_video_coins ?? 0) }}</td>
-                                        <td>{{ number_format($report->task_coins ?? 0) }}</td>
-                                        <td>{{ number_format($report->box_coins ?? 0) }}</td>
-                                        <td>{{ number_format($report->total_coins ?? 0) }}</td>
-                                        <td>{{ $report->group_time?->format('Y-m-d H:i:s') ?? '-' }}</td>
-                                        <td>{{ $report->match_count ?? 0 }}</td>
-                                        <td>{{ $report->match_duration_min ?? 0 }}</td>
-                                        <td>{{ $report->app_kyc_pass ?? '-' }}</td>
-                                        <td>{{ $report->profile_video_status ?? '-' }}</td>
-                                        <td>{{ $report->category ?? '-' }}</td>
-                                        <td>{{ $report->long_call_ratio ?? 0 }}</td>
-                                        <td>{{ $report->avg_friend_call_duration_s30d ?? 0 }}</td>
-                                        <td>{{ $report->total_call_duration_m ?? 0 }}</td>
-                                        <td>{{ $report->bank_country ?? '-' }}</td>
-                                        <td>{{ $report->if_active ?? '-' }}</td>
-                                        <td>{{ number_format($report->current_week_total_coins ?? 0) }}</td>
-                                        <td>{{ number_format($report->previous_week1_total_coins ?? 0) }}</td>
-                                        <td>{{ number_format($report->previous_week2_total_coins ?? 0) }}</td>
-                                        <td>{{ number_format($report->previous_week3_total_coins ?? 0) }}</td>
-                                        <td>{{ $report->payment_platform ?? '-' }}</td>
-                                        <td>{{ $report->app_id ?? '-' }}</td>
-                                        <td>{{ $report->has_live_permission ? 'Yes' : 'No' }}</td>
-                                        <td>{{ $report->start_live_duration_min ?? 0 }}</td>
-                                        <td>{{ $report->live_to_call_ratio ?? 0 }}</td>
+                                        @foreach($dailyReportColumns as $column)
+                                            @php
+                                                $rawValue = $column['key'] === 'client_name_uid'
+                                                    ? trim(($report->client?->name ?? '-') . ' / ' . ($report->client_id ?? '-'))
+                                                    : $report->columnValue($column['key']);
+                                                $type = $column['type'] ?? 'text';
+                                            @endphp
+                                            @if($type === 'currency')
+                                                <td>${{ number_format((float) ($rawValue ?? 0), 2) }}</td>
+                                            @elseif($type === 'integer')
+                                                <td>{{ number_format((int) ($rawValue ?? 0)) }}</td>
+                                            @elseif($type === 'decimal')
+                                                <td>{{ $rawValue ?? 0 }}</td>
+                                            @elseif($type === 'date')
+                                                <td>{{ $rawValue?->format('d M Y') ?? '-' }}</td>
+                                            @elseif($type === 'datetime')
+                                                <td>{{ $rawValue?->format('Y-m-d H:i:s') ?? '-' }}</td>
+                                            @elseif($type === 'boolean')
+                                                <td>{{ $rawValue ? 'Yes' : 'No' }}</td>
+                                            @else
+                                                <td>{{ $rawValue !== null && $rawValue !== '' ? $rawValue : '-' }}</td>
+                                            @endif
+                                        @endforeach
                                     </tr>
                                 @endforeach
                             </tbody>

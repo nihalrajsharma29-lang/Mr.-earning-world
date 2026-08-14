@@ -92,6 +92,7 @@ class DailyReport extends Model
         'has_live_permission',
         'start_live_duration_min',
         'live_to_call_ratio',
+        'extra_data',
     ];
 
     /*
@@ -173,7 +174,19 @@ class DailyReport extends Model
             'start_live_duration_min' => 'decimal:2',
 
             'live_to_call_ratio' => 'decimal:6',
+            'extra_data' => 'array',
         ];
+    }
+
+    public function columnValue(string $key): mixed
+    {
+        $value = data_get($this, $key);
+
+        if ($value !== null) {
+            return $value;
+        }
+
+        return data_get($this->extra_data ?? [], $key);
     }
 
 

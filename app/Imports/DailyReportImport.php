@@ -637,6 +637,8 @@ class DailyReportImport implements
                     $this->decimal(
                         $row['livetocallratio'] ?? 0
                     ),
+
+                'extra_data' => $row,
             ]
         );
 

@@ -3,8 +3,7 @@
 namespace App\Exports;
 
 use App\Models\DailyReport;
-use App\Support\PaymentReportColumns;
-use App\Support\ViolationReportColumns;
+use App\Support\ReportColumnManager;
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
@@ -18,11 +17,13 @@ class AdminDailyReportsExport implements FromQuery, WithHeadings, WithMapping, S
 
     private Builder $query;
     private string $reportType;
+    private array $columns;
 
-    public function __construct(Builder $query, string $reportType = 'daily_report')
+    public function __construct(Builder $query, string $reportType = 'daily_report', ?array $columns = null)
     {
         $this->query = $query->latest('dt');
         $this->reportType = $reportType;
+        $this->columns = $columns ?? ReportColumnManager::visible($reportType);
     }
 
     public function query()
@@ -33,11 +34,11 @@ class AdminDailyReportsExport implements FromQuery, WithHeadings, WithMapping, S
     public function map($report): array
     {
         if ($this->reportType === 'payment_report') {
-            return collect(PaymentReportColumns::definitions())
+            return collect($this->columns)
                 ->map(function (array $column) use ($report) {
                     $value = $column['key'] === 'client_name_uid'
                         ? trim(($report->client?->name ?? '-') . ' / ' . ($report->client_id ?? '-'))
-                        : data_get($report, $column['key']);
+                        : $report->columnValue($column['key']);
 
                     if ($column['key'] === 'group_time') {
                         return $report->group_time?->format('Y-m-d H:i:s') ?? '';
@@ -49,11 +50,11 @@ class AdminDailyReportsExport implements FromQuery, WithHeadings, WithMapping, S
         }
 
         if ($this->reportType === 'violation_records') {
-            return collect(ViolationReportColumns::definitions())
+            return collect($this->columns)
                 ->map(function (array $column) use ($report) {
                     $value = $column['key'] === 'client_name_uid'
                         ? trim(($report->client?->name ?? '-') . ' / ' . ($report->client_id ?? '-'))
-                        : data_get($report, $column['key']);
+                        : $report->columnValue($column['key']);
 
                     if ($column['key'] === 'snapshots_time') {
                         return $report->snapshots_time?->format('Y-m-d H:i:s') ?? '';
@@ -64,85 +65,38 @@ class AdminDailyReportsExport implements FromQuery, WithHeadings, WithMapping, S
                 ->all();
         }
 
-        return [
-            $report->dt?->format('Y-m-d') ?? '',
-            $report->report_type,
-            $report->host_id,
-            trim(($report->client?->name ?? '') . ' / ' . ($report->client_id ?? '')),
-            $report->user_name,
-            $report->story_status,
-            $report->gift_coins,
-            $report->non_friend_video_coins,
-            $report->friend_video_coins,
-            $report->task_coins,
-            $report->box_coins,
-            $report->total_coins,
-            $report->group_time?->format('Y-m-d H:i:s') ?? '',
-            $report->match_count,
-            $report->match_duration_min,
-            $report->app_kyc_pass,
-            $report->profile_video_status,
-            $report->category,
-            $report->long_call_ratio,
-            $report->avg_friend_call_duration_s30d,
-            $report->total_call_duration_m,
-            $report->bank_country,
-            $report->if_active,
-            $report->current_week_total_coins,
-            $report->previous_week1_total_coins,
-            $report->previous_week2_total_coins,
-            $report->previous_week3_total_coins,
-            $report->payment_platform,
-            $report->app_id,
-            $report->has_live_permission ? 'Yes' : 'No',
-            $report->start_live_duration_min,
-            $report->live_to_call_ratio,
-        ];
+        return collect($this->columns)->map(fn (array $column) => $this->value($report, $column))->all();
     }
 
     public function headings(): array
     {
         if ($this->reportType === 'payment_report') {
-            return PaymentReportColumns::headings();
+            return collect($this->columns)->pluck('label')->all();
         }
 
         if ($this->reportType === 'violation_records') {
-            return ViolationReportColumns::headings();
+            return collect($this->columns)->pluck('label')->all();
         }
 
-        return [
-            'Date',
-            'Report Type',
-            'Host ID',
-            'Client Name / UID',
-            'Username',
-            'Story Status',
-            'Gift Coins',
-            'Non-Friend Video Coins',
-            'Friend Video Coins',
-            'Task Coins',
-            'Box Coins',
-            'Total Coins',
-            'Group Time',
-            'Match Count',
-            'Match Duration (Min)',
-            'App KYC Pass',
-            'Profile Video Status',
-            'Category',
-            'Long Call Ratio',
-            'Avg. Friend Call Duration (30D)',
-            'Total Call Duration (Min)',
-            'Bank Country',
-            'Active Status',
-            'Current Week Total Coins',
-            'Previous Week 1 Total Coins',
-            'Previous Week 2 Total Coins',
-            'Previous Week 3 Total Coins',
-            'Payment Platform',
-            'App ID',
-            'Live Permission',
-            'Start Live Duration (Min)',
-            'Live-to-Call Ratio',
-        ];
+        return collect($this->columns)->pluck('label')->all();
+    }
+
+    private function value($report, array $column): mixed
+    {
+        if ($column['key'] === 'client_name_uid') {
+            return trim(($report->client?->name ?? '-') . ' / ' . ($report->client_id ?? '-'));
+        }
+
+        $value = data_get($report, $column['key']);
+
+        if (in_array($column['key'], ['dt', 'group_time', 'snapshots_time'], true)) {
+            return $value?->format($column['key'] === 'dt' ? 'Y-m-d' : 'Y-m-d H:i:s') ?? '';
+        }
+
+        if ($column['key'] === 'has_live_permission') {
+            return $value ? 'Yes' : 'No';
+        }
+
+        return $value ?? '';
     }
 }

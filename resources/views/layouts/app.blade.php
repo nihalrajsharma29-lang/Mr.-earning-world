@@ -75,6 +75,7 @@
                 <a href="{{ route('admin.reports', ['report_type' => 'daily_report']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type', 'daily_report') === 'daily_report' ? 'active' : '' }}">📅 Daily Report</a>
                 <a href="{{ route('admin.reports', ['report_type' => 'payment_report']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type') === 'payment_report' ? 'active' : '' }}">💰 Payment Report</a>
                 <a href="{{ route('admin.reports', ['report_type' => 'violation_records']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type') === 'violation_records' ? 'active' : '' }}">⚠️ Violation Records</a>
+                <a href="{{ route('admin.report-columns.index') }}" class="{{ request()->routeIs('admin.report-columns.*') ? 'active' : '' }}">⚙️ Report Columns</a>
                 <a href="{{ route('admin.bank-details') }}" class="{{ request()->routeIs('admin.bank-details') ? 'active' : '' }}">💳 Bank Card</a>
                 <a href="{{ route('admin.audit') }}" class="{{ request()->routeIs('admin.audit') ? 'active' : '' }}">📝 Audit Log</a>
                 <a href="{{ route('admin.hosts.index') }}" class="{{ request()->routeIs('admin.hosts.*') ? 'active' : '' }}">✅ Hosts</a>
