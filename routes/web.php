@@ -7,16 +7,16 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
     Route::resource('clients', ClientController::class);
 
-    // Admin actions: send reset link and regenerate temporary password
-    Route::post(
-        '/admin/clients/{client}/send-reset',
-        [ClientController::class, 'sendResetLink']
-    )->name('clients.send-reset');
+    // Admin password management is handled directly from the client edit form.
+    Route::put(
+        '/admin/clients/{client}/update-password',
+        [ClientController::class, 'updatePassword']
+    )->name('clients.update-password');
 
-    Route::post(
-        '/admin/clients/{client}/regen-password',
-        [ClientController::class, 'regenPassword']
-    )->name('clients.regen-password');
+    Route::patch(
+        '/admin/clients/{client}/commission',
+        [ClientController::class, 'updateCommission']
+    )->name('clients.update-commission');
 use App\Http\Controllers\Admin\DailyReportImportController as AdminDailyReportImportController;
 use App\Http\Controllers\Admin\DailyReportController as AdminDailyReportController;
 use App\Http\Controllers\Admin\HostApprovalController;
@@ -224,6 +224,16 @@ Route::middleware('auth')->group(function () {
         '/admin/audit/clear',
         [\App\Http\Controllers\Admin\AuditController::class, 'clear']
     )->name('admin.audit.clear');
+
+    Route::get(
+        '/admin/report-import-names',
+        [\App\Http\Controllers\Admin\DashboardController::class, 'reportImportNames']
+    )->name('admin.report-import-names');
+
+    Route::post(
+        '/admin/report-import-names',
+        [\App\Http\Controllers\Admin\DashboardController::class, 'saveReportImportNames']
+    )->name('admin.report-import-names.store');
 
 
     /*

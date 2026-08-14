@@ -128,22 +128,22 @@ class DailyReportController extends BaseController
         |--------------------------------------------------------------------------
         */
 
+        $reports = $query
+            ->latest('dt')
+            ->get();
+
         $paymentSummary = null;
         if ($reportType === 'payment_report') {
-            $agentFeeTotal = (float) (clone $query)->sum('agent_fee_usd');
-            $agentOneTimeBonusTotal = (float) (clone $query)->sum('agent_one_time_bonus_usd');
+            $agentFeeTotal = (float) $reports->sum(fn ($report) => (float) ($report->agent_fee_usd ?? 0));
+            $agentOneTimeBonusTotal = (float) $reports->sum(fn ($report) => (float) ($report->agent_one_time_bonus_usd ?? 0));
 
             $paymentSummary = [
-                'total_host_salary' => (float) (clone $query)->sum('hosts_final_reward_usd'),
+                'total_host_salary' => (float) $reports->sum(fn ($report) => (float) ($report->hosts_final_reward_usd ?? 0)),
                 'agent_fee_total' => $agentFeeTotal,
                 'agent_one_time_bonus_total' => $agentOneTimeBonusTotal,
                 'total_salary' => $agentFeeTotal + $agentOneTimeBonusTotal,
             ];
         }
-
-        $reports = $query
-            ->latest('dt')
-            ->get();
 
         $filterColumn = in_array($request->input('filter_column'), $allowedColumnKeys, true)
             ? $request->input('filter_column')

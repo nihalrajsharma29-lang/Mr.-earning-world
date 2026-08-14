@@ -86,15 +86,19 @@ class DailyReportController extends BaseController
             );
         }
 
+        $reports = $query
+            ->latest('dt')
+            ->get();
+
         $paymentSummary = null;
         if ($reportType === 'payment_report') {
-            $totalHostFinalRewards = (float) (clone $query)->sum('hosts_final_reward_usd');
-            $agentFeeTotal = (float) (clone $query)->sum('agent_fee_usd');
-            $agentOneTimeBonusTotal = (float) (clone $query)->sum('agent_one_time_bonus_usd');
-            $activeReportIds = (int) (clone $query)
+            $totalHostFinalRewards = (float) $reports->sum(fn ($report) => (float) ($report->hosts_final_reward_usd ?? 0));
+            $agentFeeTotal = (float) $reports->sum(fn ($report) => (float) ($report->agent_fee_usd ?? 0));
+            $agentOneTimeBonusTotal = (float) $reports->sum(fn ($report) => (float) ($report->agent_one_time_bonus_usd ?? 0));
+            $activeReportIds = (int) $reports
                 ->whereNotNull('host_id')
-                ->distinct()
-                ->count('host_id');
+                ->unique('host_id')
+                ->count();
 
             $paymentSummary = [
                 'total_host_final_rewards' => $totalHostFinalRewards,
@@ -104,10 +108,6 @@ class DailyReportController extends BaseController
                 'active_report_ids' => $activeReportIds,
             ];
         }
-
-        $reports = $query
-            ->latest('dt')
-            ->get();
 
         $filterColumn = in_array($request->input('filter_column'), $allowedColumnKeys, true)
             ? $request->input('filter_column')

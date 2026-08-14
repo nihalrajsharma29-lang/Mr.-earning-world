@@ -83,6 +83,20 @@
     </div>
 
     <div class="mb-4">
+        <label class="block font-semibold mb-2">Commission (%)</label>
+        <input
+            type="number"
+            name="commission_percentage"
+            class="w-full border rounded p-3"
+            value="{{ old('commission_percentage', 0) }}"
+            min="0"
+            max="100"
+            step="0.01"
+            placeholder="0.00"
+        >
+    </div>
+
+    <div class="mb-4">
         <label class="block font-semibold mb-2">Account</label>
         <label class="inline-flex items-center gap-2">
             <input type="checkbox" name="create_user" value="1" checked>

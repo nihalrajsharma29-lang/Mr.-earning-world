@@ -165,11 +165,8 @@ class DailyReportImportController extends BaseController
 
     private function requiredFileNameToken(string $reportType): ?string
     {
-        return match ($reportType) {
-            'daily_report' => '4280121896',
-            'payment_report' => 'Payment Report',
-            'violation_records' => 'Strike Records',
-            default => null,
-        };
+        $names = config('report_import_names', []);
+
+        return $names[$reportType] ?? null;
     }
 }

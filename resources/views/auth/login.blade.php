@@ -344,7 +344,7 @@
                 </div>
 
 
-                {{-- REMEMBER / FORGOT --}}
+                {{-- REMEMBER --}}
                 <div class="portal-row">
 
                     <label class="portal-remember">
@@ -358,18 +358,6 @@
                         <span>Remember me</span>
 
                     </label>
-
-
-                    @if (Route::has('password.request'))
-
-                        <a
-                            class="portal-forgot"
-                            href="{{ route('password.request') }}"
-                        >
-                            Forgot password?
-                        </a>
-
-                    @endif
 
                 </div>
 

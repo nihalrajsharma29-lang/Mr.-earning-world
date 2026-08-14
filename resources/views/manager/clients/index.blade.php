@@ -45,6 +45,7 @@
                             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Company</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Hosts</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Commission</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
@@ -63,10 +64,13 @@
                                         <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-semibold">Inactive</span>
                                     @endif
                                 </td>
+                                <td class="px-4 py-3 text-sm font-semibold text-blue-700">
+                                    {{ number_format((float) ($client->commission_percentage ?? 0), 2) }}%
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-4 py-10 text-center text-gray-500">
+                                <td colspan="8" class="px-4 py-10 text-center text-gray-500">
                                     @if(!empty($search))
                                         No clients found for "{{ $search }}"
                                     @else

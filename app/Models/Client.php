@@ -16,6 +16,7 @@ class Client extends Model
         'company',
         'address',
         'status',
+        'commission_percentage',
         'user_id',
         'bank_account_number',
         'bank_account_holder_name',
@@ -23,6 +24,13 @@ class Client extends Model
         'bank_name',
         'bank_address',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'commission_percentage' => 'decimal:2',
+        ];
+    }
 
     /**
      * Client belongs to a User.

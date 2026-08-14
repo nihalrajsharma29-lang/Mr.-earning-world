@@ -52,6 +52,7 @@ class ClientController extends BaseController
             'name'  => 'required',
             'email' => 'required|email|unique:clients',
             'phone' => 'required',
+            'commission_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
@@ -199,12 +200,66 @@ class ClientController extends BaseController
             'name'  => 'required',
             'email' => 'required|email|unique:clients,email,' . $client->id,
             'phone' => 'required',
+            'commission_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
-        $client->update($request->all());
+        $client->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'company' => $request->company,
+            'address' => $request->address,
+            'status' => $request->status,
+            'commission_percentage' => $request->input('commission_percentage', 0),
+        ]);
 
         return redirect()->route('clients.index')
             ->with('success', 'Client Updated Successfully.');
+    }
+
+    /**
+     * Update only the client's commission from the management table.
+     */
+    public function updateCommission(Request $request, Client $client)
+    {
+        $request->validate([
+            'commission_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
+        ]);
+
+        $client->update([
+            'commission_percentage' => $request->commission_percentage,
+        ]);
+
+        return back()->with('success', 'Commission updated successfully.');
+    }
+
+    /**
+     * Update or create the client's login password directly from admin action.
+     */
+    public function updatePassword(Request $request, Client $client)
+    {
+        $request->validate([
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user = $client->user ?? User::where('email', $client->email)->first();
+
+        if (! $user) {
+            $user = User::create([
+                'name' => $client->name,
+                'email' => $client->email,
+                'password' => Hash::make($request->password),
+                'role' => 'client',
+            ]);
+
+            $client->user_id = $user->id;
+            $client->save();
+        } else {
+            $user->password = Hash::make($request->password);
+            $user->save();
+        }
+
+        return back()->with('success', 'Client password updated successfully.');
     }
 
     /**

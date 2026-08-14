@@ -73,6 +73,7 @@
                 <th class="p-3 text-left">Company</th>
                 <th class="p-3 text-left">Hosts</th>
                 <th class="p-3 text-left">Status</th>
+                <th class="p-3 text-left">Commission</th>
                 <th class="p-3 text-left">Action</th>
             </tr>
 
@@ -124,6 +125,24 @@
 
                     @endif
 
+                </td>
+
+                <td class="p-3">
+                    <form action="{{ route('clients.update-commission', $client->id) }}" method="POST" class="inline-block">
+                        @csrf
+                        @method('PATCH')
+                        <input
+                            type="number"
+                            name="commission_percentage"
+                            value="{{ old('commission_percentage', $client->commission_percentage ?? 0) }}"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            class="w-24 border rounded px-2 py-1 text-center font-semibold text-blue-700"
+                            onchange="this.form.submit()"
+                            title="Update commission for {{ $client->name }}"
+                        >
+                    </form>
                 </td>
 
                 <td class="p-3">

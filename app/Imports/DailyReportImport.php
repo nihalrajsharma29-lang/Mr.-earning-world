@@ -50,6 +50,18 @@ class DailyReportImport implements
     public function model(array $row)
     {
         $row = $this->normalizeRowKeys($row);
+
+        $detectedClientId = $this->resolveClientId($row);
+        $commissionRate = 0;
+
+        if ($detectedClientId) {
+            $commissionRate = (float) (Client::find($detectedClientId)?->commission_percentage ?? 0);
+        }
+
+        if ($this->clientId) {
+            $commissionRate = (float) (Client::find($this->clientId)?->commission_percentage ?? $commissionRate);
+        }
+
         /*
         |--------------------------------------------------------------------------
         | Host ID
@@ -515,13 +527,23 @@ class DailyReportImport implements
 
                 'agent_fee_usd' =>
                     $this->decimal(
-                        $this->value(
+                        ($this->value(
                             $row,
                             [
                                 'agentfeeusd',
                                 'agent feeusd',
                             ]
-                        ) ?? 0
+                        ) ?? 0) > 0
+                            ? $this->value(
+                                $row,
+                                [
+                                    'agentfeeusd',
+                                    'agent feeusd',
+                                ]
+                            )
+                            : ($commissionRate > 0
+                                ? max(0, ($this->decimal($this->value($row, ['weeklyrewardbaseusdhosts', 'weekly reward base usd hosts']) ?? 0) * ($commissionRate / 100)))
+                                : 0)
                     ),
 
                 'agent_one_time_bonus_usd' =>

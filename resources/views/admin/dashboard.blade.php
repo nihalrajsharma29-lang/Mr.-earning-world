@@ -100,6 +100,24 @@
         </p>
     </a>
 
+    {{-- Report Naming --}}
+    <a
+        href="{{ route('admin.report-import-names') }}"
+        class="block bg-white p-6 rounded-xl shadow hover:shadow-lg transition"
+    >
+        <h3 class="text-gray-500 text-lg">
+            Report Names
+        </h3>
+
+        <h1 class="text-4xl font-bold mt-3">
+            🏷️
+        </h1>
+
+        <p class="text-blue-600 mt-3">
+            Edit import file names →
+        </p>
+    </a>
+
 </div>
 
 @if(session('success'))

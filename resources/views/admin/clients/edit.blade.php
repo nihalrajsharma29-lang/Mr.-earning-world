@@ -129,34 +129,71 @@
 
         </div>
 
-        {{-- Account actions: send reset / create login --}}
-        <div class="mb-4">
-            @if($client->user)
-                <div class="bg-gray-50 p-4 rounded mb-3">
-                    <strong>Login:</strong> {{ $client->user->email }}
-                </div>
+        <div class="mb-6">
 
-                <div class="flex gap-2 mb-4">
-                    <form action="{{ route('clients.send-reset', $client) }}" method="POST">
-                        @csrf
-                        <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded">Send Reset Link</button>
-                    </form>
+            <label class="block font-semibold mb-2">
+                Commission (%)
+            </label>
 
-                    <form action="{{ route('clients.regen-password', $client) }}" method="POST">
-                        @csrf
-                        <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded">Regenerate + Send Reset</button>
-                    </form>
-                </div>
-            @else
-                <div class="bg-gray-50 p-4 rounded mb-3">
-                    No login created for this client yet.
-                </div>
+            <input
+                type="number"
+                name="commission_percentage"
+                value="{{ old('commission_percentage', $client->commission_percentage ?? 0) }}"
+                class="w-full border rounded p-3"
+                min="0"
+                max="100"
+                step="0.01"
+                placeholder="0.00"
+            >
 
-                <form action="{{ route('clients.send-reset', $client) }}" method="POST" class="mb-4">
+        </div>
+
+        <div class="mb-6">
+            <div class="bg-gray-50 p-4 rounded mb-3">
+                <strong>Login:</strong> {{ $client->user ? $client->user->email : 'No login created for this client yet.' }}
+            </div>
+
+            <div class="border rounded p-4 bg-white">
+                <h3 class="text-lg font-semibold mb-3">Admin Password Update</h3>
+                <p class="text-sm text-gray-600 mb-4">
+                    Set a new password for this client account so the client can log in if they forgot their password.
+                </p>
+
+                <form action="{{ route('clients.update-password', $client) }}" method="POST">
                     @csrf
-                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Create Login & Send Reset Link</button>
+                    @method('PUT')
+
+                    <div class="mb-4">
+                        <label class="block font-semibold mb-2">New Password</label>
+                        <input
+                            type="password"
+                            name="password"
+                            class="w-full border rounded p-3"
+                            placeholder="Enter new password"
+                            required
+                            minlength="8"
+                            autocomplete="new-password"
+                        >
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block font-semibold mb-2">Confirm Password</label>
+                        <input
+                            type="password"
+                            name="password_confirmation"
+                            class="w-full border rounded p-3"
+                            placeholder="Confirm new password"
+                            required
+                            minlength="8"
+                            autocomplete="new-password"
+                        >
+                    </div>
+
+                    <button type="submit" class="bg-indigo-600 text-white px-5 py-2 rounded hover:bg-indigo-700">
+                        Update Client Password
+                    </button>
                 </form>
-            @endif
+            </div>
         </div>
 
         <div class="flex gap-3">
