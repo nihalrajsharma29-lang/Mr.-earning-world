@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Client;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -45,6 +46,32 @@ class PasswordResetTest extends TestCase
 
             return true;
         });
+    }
+
+    public function test_client_reset_link_can_be_requested_when_client_profile_exists_without_user_record(): void
+    {
+        Notification::fake();
+
+        $client = Client::create([
+            'name' => 'Test Client',
+            'email' => 'client@example.com',
+            'phone' => '1234567890',
+            'company' => 'Example Corp',
+            'status' => 'Active',
+        ]);
+
+        $this->post('/forgot-password', ['email' => $client->email]);
+
+        $this->assertDatabaseHas('users', [
+            'email' => $client->email,
+            'role' => 'client',
+        ]);
+
+        $user = User::where('email', $client->email)->first();
+        $this->assertNotNull($user);
+        $this->assertSame($user->id, $client->fresh()->user_id);
+
+        Notification::assertSentTo($user, ResetPassword::class);
     }
 
     public function test_password_can_be_reset_with_valid_token(): void

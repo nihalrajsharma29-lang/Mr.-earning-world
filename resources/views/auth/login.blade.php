@@ -309,6 +309,41 @@
                 </div>
 
 
+                {{-- CAPTCHA --}}
+                <div class="portal-field">
+
+                    <label for="captcha">
+                        Security code
+                    </label>
+
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
+                        <div style="flex:1; padding:12px 14px; border-radius:12px; background:#eef2ff; border:1px solid #c7d2fe; font-size:24px; font-weight:800; letter-spacing:6px; text-align:center; color:#312e81;">
+                            {{ $captcha ?? '0000' }}
+                        </div>
+                    </div>
+
+                    <input
+                        id="captcha"
+                        class="portal-input"
+                        type="text"
+                        name="captcha"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        maxlength="4"
+                        placeholder="Enter 4-digit code"
+                        required
+                        autocomplete="off"
+                    >
+
+                    @if ($errors->get('captcha'))
+                        <div class="portal-error">
+                            {{ $errors->first('captcha') }}
+                        </div>
+                    @endif
+
+                </div>
+
+
                 {{-- REMEMBER / FORGOT --}}
                 <div class="portal-row">
 

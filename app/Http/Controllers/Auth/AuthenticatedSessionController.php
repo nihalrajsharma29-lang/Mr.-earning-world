@@ -16,7 +16,11 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): View
     {
-        return view('auth.login');
+        session(['login_captcha' => random_int(1000, 9999)]);
+
+        return view('auth.login', [
+            'captcha' => session('login_captcha'),
+        ]);
     }
 
     /**
@@ -26,6 +30,7 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        $request->session()->forget('login_captcha');
         $request->session()->regenerate();
 
         if (Auth::user()->role === 'admin') {
