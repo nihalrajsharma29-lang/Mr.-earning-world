@@ -15,6 +15,7 @@ class DailyReport extends Model
         'customer_id',
 
         'dt',
+        'weekly_date',
         'report_type',
 
         'host_id',
@@ -110,6 +111,7 @@ class DailyReport extends Model
         return [
 
             'dt' => 'date',
+            'weekly_date' => 'date',
 
             'group_time' => 'datetime',
 
@@ -180,6 +182,10 @@ class DailyReport extends Model
 
     public function columnValue(string $key): mixed
     {
+        if ($key === 'customer_country') {
+            return $this->customer?->country;
+        }
+
         $value = data_get($this, $key);
 
         if ($value !== null) {

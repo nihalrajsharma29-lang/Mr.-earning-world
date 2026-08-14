@@ -44,6 +44,12 @@ class AdminDailyReportsExport implements FromQuery, WithHeadings, WithMapping, S
                         return $report->group_time?->format('Y-m-d H:i:s') ?? '';
                     }
 
+                    if ($column['key'] === 'weekly_date') {
+                        return $report->weekly_date
+                            ? $report->weekly_date->format('d-M-Y') . ' to ' . $report->weekly_date->copy()->addDays(6)->format('d-M-Y')
+                            : '';
+                    }
+
                     return $value ?? '';
                 })
                 ->all();

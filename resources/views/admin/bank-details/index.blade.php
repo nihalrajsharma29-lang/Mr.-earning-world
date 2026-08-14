@@ -10,6 +10,9 @@
                 <h1 class="text-2xl font-bold text-gray-900">Bank Details</h1>
                 <p class="text-sm text-gray-500">Client bank information submitted from the client portal.</p>
             </div>
+            <a href="{{ route('admin.bank-details.export') }}" class="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
+                Export to Excel
+            </a>
         </div>
 
         @if(session('success'))
@@ -27,18 +30,27 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Weekly Date</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Client</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Account Holder Name</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Account Number</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">IFSC</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Bank Name</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Address</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Total Agent Salary</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Action</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach($clients as $client)
                             <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                    @if($client->payment_weekly_date)
+                                        {{ \Illuminate\Support\Carbon::parse($client->payment_weekly_date)->format('d-M-Y') }} to {{ \Illuminate\Support\Carbon::parse($client->payment_weekly_date)->addDays(6)->format('d-M-Y') }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                     {{ $client->name }}
                                 </td>
@@ -57,8 +69,19 @@
                                 <td class="px-6 py-4 text-sm text-gray-700 max-w-md">
                                     {{ $client->bank_address ?? '-' }}
                                 </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                    ${{ number_format((float) ($client->total_agent_salary ?? 0), 2) }}
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center gap-2">
+                                        <form action="{{ route('admin.bank-details.transfer-status', $client) }}" method="POST">
+                                            @csrf
+                                            @method('PATCH')
+                                            <select name="transfer_status" onchange="this.form.submit()" class="rounded-md border-gray-300 text-xs font-medium {{ $client->transfer_status === 'transferred' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700' }}" title="Transfer status">
+                                                <option value="pending" {{ ($client->transfer_status ?? 'pending') === 'pending' ? 'selected' : '' }}>Pending</option>
+                                                <option value="transferred" {{ $client->transfer_status === 'transferred' ? 'selected' : '' }}>Transferred</option>
+                                            </select>
+                                        </form>
                                         @if($client->bank_account_number)
                                             <button
                                                 type="button"
@@ -67,6 +90,8 @@
                                                 data-account-number="{{ $client->bank_account_number ?? '' }}"
                                                 data-ifsc="{{ $client->bank_ifsc_code ?? '' }}"
                                                 data-client-name="{{ $client->name ?? '' }}"
+                                                data-total-agent-salary="{{ number_format((float) ($client->total_agent_salary ?? 0), 2) }}"
+                                                data-weekly-date="{{ $client->payment_weekly_date ? \Illuminate\Support\Carbon::parse($client->payment_weekly_date)->format('d-M-Y') . ' to ' . \Illuminate\Support\Carbon::parse($client->payment_weekly_date)->addDays(6)->format('d-M-Y') : '-' }}"
                                                 title="Copy account details"
                                             >
                                                 Copy
@@ -98,12 +123,16 @@
                     const accountNumber = button.getAttribute('data-account-number') || '';
                     const ifsc = button.getAttribute('data-ifsc') || '';
                     const clientName = button.getAttribute('data-client-name') || '';
+                    const totalAgentSalary = button.getAttribute('data-total-agent-salary') || '0.00';
+                    const weeklyDate = button.getAttribute('data-weekly-date') || '-';
 
                     const text = [
                         'Account Holder Name - ' + accountHolder,
                         'Account Number - ' + accountNumber,
                         'IFSC - ' + ifsc,
-                        'Client Name - ' + clientName
+                        'Client Name - ' + clientName,
+                        'Weekly Date - ' + weeklyDate,
+                        'Total Agent Salary - $' + totalAgentSalary
                     ].join('\n');
 
                     navigator.clipboard.writeText(text)

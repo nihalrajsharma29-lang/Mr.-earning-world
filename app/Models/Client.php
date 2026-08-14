@@ -23,6 +23,7 @@ class Client extends Model
         'bank_ifsc_code',
         'bank_name',
         'bank_address',
+        'transfer_status',
     ];
 
     protected function casts(): array

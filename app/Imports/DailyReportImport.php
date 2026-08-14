@@ -34,11 +34,13 @@ class DailyReportImport implements
      */
     private ?int $clientId = null;
     private string $reportType = 'daily_report';
+    private ?string $weeklyDate = null;
 
-    public function __construct(?int $clientId = null, string $reportType = 'daily_report')
+    public function __construct(?int $clientId = null, string $reportType = 'daily_report', ?string $weeklyDate = null)
     {
         $this->clientId = $clientId;
         $this->reportType = $this->normalizeReportType($reportType);
+        $this->weeklyDate = $weeklyDate;
     }
 
     /*
@@ -116,6 +118,16 @@ class DailyReportImport implements
             return $this->markSkipped();
         }
 
+        try {
+            $weeklyDate = $this->weeklyDate;
+            if ($weeklyDate === null && $this->reportType === 'payment_report') {
+                $weeklyDateValue = $this->value($row, ['weeklydate', 'weekly date', 'weekstart', 'week start']);
+                $weeklyDate = $weeklyDateValue !== null ? $this->date($weeklyDateValue) : null;
+            }
+        } catch (\Throwable $e) {
+            return $this->markSkipped();
+        }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -156,8 +168,14 @@ class DailyReportImport implements
             $customer->update(['client_id' => $detectedClientId]);
         }
 
-        $country = $this->value($row, ['country', 'hostcountry', 'host country']);
-        if (empty($customer->country) && $country) {
+        $country = $this->value($row, [
+            'country',
+            'hostcountry',
+            'host country',
+            'countryregion',
+            'host country region',
+        ]);
+        if ($country) {
             $customer->update(['country' => $country]);
         }
 
@@ -175,6 +193,16 @@ class DailyReportImport implements
         |
         */
 
+        $agentOneTimeBonus = $this->decimal(
+            $this->value(
+                $row,
+                [
+                    'agentonetimebonususd',
+                    'agent one time bonus usd',
+                ]
+            ) ?? 0
+        );
+
         DailyReport::updateOrCreate(
             [
                 'customer_id' => $customer->id,
@@ -185,6 +213,7 @@ class DailyReportImport implements
 
                 'client_id' => $customer->client_id,
                 'report_type' => $this->reportType,
+                'weekly_date' => $weeklyDate,
 
                 'host_id' => $hostId,
 
@@ -367,8 +396,13 @@ class DailyReportImport implements
                 'bank_country' =>
                     $this->value(
                         $row,
-                        'bankcountry'
-                    ),
+                        [
+                            'bankcountry',
+                            'bank country',
+                            'bankaccountcountry',
+                            'bank account country',
+                        ]
+                    ) ?? $country,
 
                 'if_bind_bank_info' =>
                     $this->value(
@@ -547,15 +581,7 @@ class DailyReportImport implements
                     ),
 
                 'agent_one_time_bonus_usd' =>
-                    $this->decimal(
-                        $this->value(
-                            $row,
-                            [
-                                'agentonetimebonususd',
-                                'agent one time bonus usd',
-                            ]
-                        ) ?? 0
-                    ),
+                    $agentOneTimeBonus > 0 ? 5 : 0,
 
 
                 /*

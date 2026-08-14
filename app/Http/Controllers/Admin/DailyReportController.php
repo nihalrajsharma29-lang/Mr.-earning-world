@@ -8,6 +8,7 @@ use App\Models\AdminAuditLog;
 use App\Models\DailyReport;
 use App\Support\ReportColumnManager;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class DailyReportController extends BaseController
 {
@@ -29,6 +30,41 @@ class DailyReportController extends BaseController
 
         $query = DailyReport::with(['customer', 'client'])
             ->where('report_type', $reportType);
+
+        $weeklyDate = null;
+        $shouldFilterByWeeklyDate = false;
+        if ($reportType === 'payment_report') {
+            $weeklyDate = $request->input('weekly_date');
+
+            if ($weeklyDate !== null) {
+            $shouldFilterByWeeklyDate = true;
+                $request->validate([
+                    'weekly_date' => [
+                        'date',
+                        'date_format:Y-m-d',
+                        function (string $attribute, mixed $value, \Closure $fail): void {
+                            if (! Carbon::parse($value)->isMonday()) {
+                                $fail('The weekly date must be a Monday.');
+                            }
+                        },
+                    ],
+                ]);
+            } else {
+                $weeklyDate = (clone $query)
+                    ->whereNotNull('weekly_date')
+                    ->latest('weekly_date')
+                    ->value('weekly_date');
+                $shouldFilterByWeeklyDate = $weeklyDate !== null;
+            }
+
+            $weeklyDate = $weeklyDate
+                ? Carbon::parse($weeklyDate)->toDateString()
+                : Carbon::now()->startOfWeek(Carbon::MONDAY)->toDateString();
+
+            if ($shouldFilterByWeeklyDate) {
+                $query->whereDate('weekly_date', $weeklyDate);
+            }
+        }
 
         $availableColumns = ReportColumnManager::visible($reportType);
         $allowedColumnKeys = collect($availableColumns)->pluck('key')->all();
@@ -89,6 +125,13 @@ class DailyReportController extends BaseController
         $reports = $query
             ->latest('dt')
             ->get();
+
+        $totalHostCount = $reportType === 'daily_report'
+            ? $reports->whereNotNull('host_id')->unique('host_id')->count()
+            : 0;
+        $workingHostCount = $reportType === 'daily_report'
+            ? $reports->filter(fn ($report) => (float) ($report->total_coins ?? 0) > 0)->whereNotNull('host_id')->unique('host_id')->count()
+            : 0;
 
         $paymentSummary = null;
         if ($reportType === 'payment_report') {
@@ -151,7 +194,7 @@ class DailyReportController extends BaseController
 
         return view(
             $isManager ? 'manager.reports.index' : 'admin.clients.daily-reports.index',
-            compact('reports', 'reportType', 'paymentReportColumns', 'paymentSummary', 'violationReportColumns', 'dailyReportColumns')
+            compact('reports', 'reportType', 'weeklyDate', 'totalHostCount', 'workingHostCount', 'paymentReportColumns', 'paymentSummary', 'violationReportColumns', 'dailyReportColumns')
         );
     }
 
@@ -238,5 +281,31 @@ class DailyReportController extends BaseController
         return redirect()
             ->route($routeName, ['report_type' => $reportType])
             ->with('success', "{$deleted} selected report(s) deleted.");
+    }
+
+    public function updateWeeklyDate(Request $request, DailyReport $report)
+    {
+        abort_unless($report->report_type === 'payment_report', 404);
+
+        $validated = $request->validate([
+            'weekly_date' => [
+                'required',
+                'date',
+                'date_format:Y-m-d',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (! Carbon::parse($value)->isMonday()) {
+                        $fail('The weekly date must be a Monday.');
+                    }
+                },
+            ],
+        ]);
+
+        $report->update(['weekly_date' => $validated['weekly_date']]);
+
+        $routeName = auth()->user()->role === 'manager' ? 'manager.reports' : 'admin.reports';
+
+        return redirect()
+            ->route($routeName, ['report_type' => 'payment_report'])
+            ->with('success', 'Weekly date updated.');
     }
 }

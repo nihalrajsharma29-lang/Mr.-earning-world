@@ -56,6 +56,8 @@
     .card { background: white; border-radius: 16px; border: 1px solid #e5e7eb; overflow: hidden; }
     .table-header { padding: 20px 24px; border-bottom: 1px solid #e5e7eb; }
     .table-header h3 { margin: 0; font-size: 18px; }
+    .client-weekly-date { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 9px 13px; border: 1px solid #bfdbfe; border-radius: 10px; background: #eff6ff; color: #1e40af; font-size: 13px; font-weight: 700; }
+    .client-weekly-date-label { color: #475569; font-weight: 600; }
     .table-wrapper { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; min-width: 900px; }
     th, td { padding: 14px 18px; text-align: left; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
@@ -120,23 +122,23 @@
     @unless($isViolationReport)
     <div class="summary-grid">
         <div class="summary-card">
-            <div class="summary-title">{{ $isPaymentReport ? 'Total Host Salary' : 'Total Reports' }}</div>
+            <div class="summary-title">{{ $isPaymentReport ? 'Total Host Salary' : 'Total Host' }}</div>
             <div class="summary-value">
                 @if($isPaymentReport)
                     ${{ number_format($paymentSummary['total_host_salary'] ?? 0, 2) }}
                 @else
-                    {{ $reports->count() }}
+                    {{ $totalHostCount }}
                 @endif
             </div>
         </div>
 
         <div class="summary-card">
-            <div class="summary-title">{{ $isPaymentReport ? 'Agent Fee' : 'Reports on Page' }}</div>
+            <div class="summary-title">{{ $isPaymentReport ? 'Agent Fee' : 'Working Host' }}</div>
             <div class="summary-value">
                 @if($isPaymentReport)
                     ${{ number_format($paymentSummary['agent_fee_total'] ?? 0, 2) }}
                 @else
-                    {{ $reports->count() }}
+                    {{ $workingHostCount }}
                 @endif
             </div>
         </div>
@@ -151,7 +153,7 @@
                 @endif
             </div>
         </div>
-
+        @if($isPaymentReport)
         <div class="summary-card">
             <div class="summary-title">{{ $isPaymentReport ? 'Agent Total Salary' : 'Active Reports' }}</div>
             <div class="summary-value">
@@ -162,6 +164,7 @@
                 @endif
             </div>
         </div>
+        @endif
     </div>
     @endunless
 
@@ -215,6 +218,12 @@
     <div class="card">
         <div class="table-header">
             <h3>{{ $isPaymentReport ? 'Host Payment Reports' : ($isViolationReport ? 'Report Results' : 'Host Daily Reports') }}</h3>
+            @if($isPaymentReport && $weeklyDate)
+                <div class="client-weekly-date" aria-label="Weekly Date (Mon to Sun)">
+                    <span class="client-weekly-date-label">Weekly Date (Mon to Sun):</span>
+                    <span>{{ \Illuminate\Support\Carbon::parse($weeklyDate)->format('d-M-Y') }} to {{ \Illuminate\Support\Carbon::parse($weeklyDate)->addDays(6)->format('d-M-Y') }}</span>
+                </div>
+            @endif
         </div>
 
         @if($reports->count() > 0)

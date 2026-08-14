@@ -7,6 +7,7 @@ use App\Http\Controllers\Client\BaseController;
 use App\Models\DailyReport;
 use App\Support\ReportColumnManager;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class DailyReportController extends BaseController
 {
@@ -38,6 +39,14 @@ class DailyReportController extends BaseController
         $query = DailyReport::with(['customer', 'client'])
             ->where('client_id', $client->id)
             ->where('report_type', $reportType);
+
+        $weeklyDate = null;
+        if ($reportType === 'payment_report') {
+            $weeklyDate = (clone $query)
+                ->whereNotNull('weekly_date')
+                ->latest('weekly_date')
+                ->value('weekly_date');
+        }
 
         $availableColumns = ReportColumnManager::visible($reportType);
         $allowedColumnKeys = collect($availableColumns)->pluck('key')->all();
@@ -132,6 +141,20 @@ class DailyReportController extends BaseController
             ->latest('dt')
             ->get();
 
+        $totalHostCount = $reportType === 'daily_report'
+            ? $reports->whereNotNull('host_id')->unique('host_id')->count()
+            : 0;
+        $workingHostCount = $reportType === 'daily_report'
+            ? $reports->filter(fn ($report) => (float) ($report->total_coins ?? 0) > 0)->whereNotNull('host_id')->unique('host_id')->count()
+            : 0;
+
+        if ($reportType === 'payment_report' && ! $weeklyDate) {
+            $weeklyDate = $reports
+                ->first(fn ($report) => $report->weekly_date !== null)
+                ?->weekly_date
+                ?->toDateString();
+        }
+
         $paymentSummary = null;
         if ($reportType === 'payment_report') {
             $agentFeeTotal = (float) $reports->sum(fn ($report) => (float) ($report->agent_fee_usd ?? 0));
@@ -193,7 +216,7 @@ class DailyReportController extends BaseController
 
         return view(
             'client.daily-reports.index',
-            compact('reports', 'client', 'reportType', 'paymentReportColumns', 'paymentSummary', 'violationReportColumns', 'dailyReportColumns')
+            compact('reports', 'client', 'reportType', 'weeklyDate', 'totalHostCount', 'workingHostCount', 'paymentReportColumns', 'paymentSummary', 'violationReportColumns', 'dailyReportColumns')
         );
     }
 }

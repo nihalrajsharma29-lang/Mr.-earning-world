@@ -134,6 +134,11 @@ Route::middleware('auth')->group(function () {
         [\App\Http\Controllers\Admin\DailyReportController::class, 'destroySelected']
     )->name('manager.reports.delete.selected');
 
+    Route::patch(
+        '/manager/reports/{report}/weekly-date',
+        [\App\Http\Controllers\Admin\DailyReportController::class, 'updateWeeklyDate']
+    )->name('manager.reports.weekly-date');
+
     Route::get(
         '/manager/clients',
         [\App\Http\Controllers\Manager\ClientController::class, 'index']
@@ -169,6 +174,11 @@ Route::middleware('auth')->group(function () {
         '/admin/daily-reports/import',
         [AdminDailyReportImportController::class, 'store']
     )->name('admin.daily.import.store');
+
+    Route::patch(
+        '/admin/reports/{report}/weekly-date',
+        [AdminDailyReportController::class, 'updateWeeklyDate']
+    )->name('admin.reports.weekly-date');
 
 
     /*
@@ -224,6 +234,16 @@ Route::middleware('auth')->group(function () {
         '/admin/audit/clear',
         [\App\Http\Controllers\Admin\AuditController::class, 'clear']
     )->name('admin.audit.clear');
+
+    Route::patch(
+        '/admin/bank-details/{client}/transfer-status',
+        [\App\Http\Controllers\Admin\BankDetailsController::class, 'updateTransferStatus']
+    )->name('admin.bank-details.transfer-status');
+
+    Route::get(
+        '/admin/bank-details/export',
+        [\App\Http\Controllers\Admin\BankDetailsController::class, 'export']
+    )->name('admin.bank-details.export');
 
     Route::get(
         '/admin/report-import-names',

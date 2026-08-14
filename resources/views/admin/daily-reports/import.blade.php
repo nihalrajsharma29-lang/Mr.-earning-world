@@ -58,6 +58,11 @@
                 </select>
             </div>
 
+            <div class="form-group" id="weekly-date-group" style="display: none;">
+                <label for="weekly_date">Weekly Date (Mon-Sun)</label>
+                <input type="date" name="weekly_date" id="weekly_date" value="{{ old('weekly_date', now()->startOfWeek(\Illuminate\Support\Carbon::MONDAY)->format('Y-m-d')) }}">
+            </div>
+
             <div class="form-group">
                 <label for="file">Select Excel File</label>
                 <input type="file" name="file" id="file" accept=".xlsx,.xls,.csv" required>
@@ -70,3 +75,20 @@
         </form>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    const reportType = document.getElementById('report_type');
+    const weeklyDateGroup = document.getElementById('weekly-date-group');
+    const weeklyDate = document.getElementById('weekly_date');
+
+    function toggleWeeklyDate() {
+        const isPaymentReport = reportType.value === 'payment_report';
+        weeklyDateGroup.style.display = isPaymentReport ? '' : 'none';
+        weeklyDate.required = isPaymentReport;
+    }
+
+    reportType.addEventListener('change', toggleWeeklyDate);
+    toggleWeeklyDate();
+</script>
+@endpush

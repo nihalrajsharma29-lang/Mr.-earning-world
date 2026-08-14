@@ -37,12 +37,15 @@ class ReportColumnManager
             return self::defaults($reportType);
         }
 
-        return $saved->map(fn (ReportColumn $column) => [
+        $columns = $saved->reject(fn (ReportColumn $column) => $reportType === 'payment_report' && $column->column_key === 'weekly_date')
+            ->map(fn (ReportColumn $column) => [
             'key' => $column->column_key,
             'label' => $column->label,
             'type' => $column->type,
         ])->sortBy(fn (array $column) => $saved[$column['key']]->position)
             ->values()
             ->all();
+
+        return $columns;
     }
 }

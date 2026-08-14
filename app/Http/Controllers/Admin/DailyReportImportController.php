@@ -42,7 +42,7 @@ class DailyReportImportController extends BaseController
         // TEMPORARY ZIP DEBUG
         
 
-        $request->validate([
+        $rules = [
             'file' => [
                 'required',
                 'file',
@@ -54,7 +54,22 @@ class DailyReportImportController extends BaseController
                 'string',
                 'in:daily_report,payment_report,violation_records',
             ],
-        ]);
+        ];
+
+        $rules['weekly_date'] = $request->input('report_type') === 'payment_report'
+            ? [
+                'required',
+                'date',
+                'date_format:Y-m-d',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (! \Illuminate\Support\Carbon::parse($value)->isMonday()) {
+                        $fail('The weekly date must be a Monday.');
+                    }
+                },
+            ]
+            : ['nullable', 'date', 'date_format:Y-m-d'];
+
+        $request->validate($rules);
 
         $fileName = $request->file('file')->getClientOriginalName();
         $requiredToken = $this->requiredFileNameToken($request->report_type);
@@ -85,7 +100,8 @@ class DailyReportImportController extends BaseController
         try {
             $import = new DailyReportImport(
                 null,
-                $request->report_type
+                $request->report_type,
+                $request->input('report_type') === 'payment_report' ? $request->input('weekly_date') : null
             );
 
             Excel::import(

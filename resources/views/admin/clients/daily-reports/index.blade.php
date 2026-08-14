@@ -18,6 +18,9 @@
     .panel { background: white; border: 1px solid #e5e7eb; border-radius: 18px; margin-bottom: 24px; overflow: hidden; }
     .panel-body { padding: 22px; }
     .panel-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .report-results-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .weekly-date-display { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; color: #1e40af; font-size: 13px; font-weight: 700; }
+    .weekly-date-display-label { color: #475569; font-weight: 600; }
     .panel-text { color: #6b7280; line-height: 1.7; }
     .filter-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: end; }
     .filter-group { display: flex; flex-direction: column; gap: 8px; }
@@ -40,7 +43,7 @@
     .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
     .empty { padding: 48px; text-align: center; color: #6b7280; }
     @media (max-width: 960px) { .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filter-form { grid-template-columns: 1fr; } }
-    @media (max-width: 660px) { .summary-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 660px) { .summary-grid { grid-template-columns: 1fr; } .weekly-date-display { width: 100%; } }
 </style>
 @endpush
 
@@ -63,23 +66,23 @@
     @unless($isViolationReport)
     <div class="summary-grid">
         <div class="summary-card">
-            <div class="summary-label">{{ $isPaymentReport ? 'Total Host Final Rewards' : 'Total Reports' }}</div>
+            <div class="summary-label">{{ $isPaymentReport ? 'Total Host Final Rewards' : 'Total Host' }}</div>
             <div class="summary-value">
                 @if($isPaymentReport)
                     ${{ number_format($paymentSummary['total_host_final_rewards'] ?? 0, 2) }}
                 @else
-                    {{ $reports->count() }}
+                    {{ $totalHostCount }}
                 @endif
             </div>
         </div>
 
         <div class="summary-card">
-            <div class="summary-label">{{ $isPaymentReport ? 'Agent Fee' : 'Reports on Page' }}</div>
+            <div class="summary-label">{{ $isPaymentReport ? 'Agent Fee' : 'Working Host' }}</div>
             <div class="summary-value">
                 @if($isPaymentReport)
                     ${{ number_format($paymentSummary['agent_fee_total'] ?? 0, 2) }}
                 @else
-                    {{ $reports->count() }}
+                    {{ $workingHostCount }}
                 @endif
             </div>
         </div>
@@ -94,7 +97,7 @@
                 @endif
             </div>
         </div>
-
+        @if($isPaymentReport)
         <div class="summary-card">
             <div class="summary-label">Agent Total Salary</div>
             <div class="summary-value">
@@ -105,6 +108,7 @@
                 @endif
             </div>
         </div>
+        @endif
     </div>
     @endunless
 
@@ -164,7 +168,15 @@
 
     <div class="panel">
         <div class="panel-body">
-            <div class="panel-title">Report Results</div>
+            <div class="panel-title report-results-heading">
+                <span>Report Results</span>
+                @if($isPaymentReport && $weeklyDate)
+                    <div class="weekly-date-display" aria-label="Weekly Date (Mon to Sun)">
+                        <span class="weekly-date-display-label">Weekly Date (Mon to Sun):</span>
+                        <span>{{ \Illuminate\Support\Carbon::parse($weeklyDate)->format('d-M-Y') }} to {{ \Illuminate\Support\Carbon::parse($weeklyDate)->addDays(6)->format('d-M-Y') }}</span>
+                    </div>
+                @endif
+            </div>
             @if($reports->count() > 0)
                 <div class="table-wrapper">
                     @if(($reportType ?? request('report_type', 'daily_report')) === 'payment_report')
