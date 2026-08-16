@@ -33,6 +33,9 @@
     .actions-inline { display: flex; flex-wrap: nowrap; gap: 8px; align-items: center; }
     .actions-inline form { margin: 0; }
     .table-checkbox { width: 16px; height: 16px; cursor: pointer; }
+    .copy-host-id { border: 1px solid #d1d5db; border-radius: 6px; padding: 4px 7px; background: #f9fafb; color: #374151; cursor: pointer; font-size: 11px; }
+    .copy-host-id:hover { background: #e5e7eb; }
+    .host-id-cell { white-space: nowrap; }
     @media (max-width: 840px) { .table-wrapper { min-width: 760px; } }
 </style>
 @endpush
@@ -117,7 +120,12 @@
                                         <input type="checkbox" class="host-select-checkbox table-checkbox" value="{{ $host->id }}">
                                     </td>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td><strong>{{ $host->customer_id ?? '-' }}</strong></td>
+                                    <td class="host-id-cell">
+                                        <strong>{{ $host->customer_id ?? '-' }}</strong>
+                                        @if($host->customer_id)
+                                            <button type="button" class="copy-host-id" data-copy-id="{{ $host->customer_id }}" title="Copy Host ID">Copy</button>
+                                        @endif
+                                    </td>
                                     <td><strong>{{ $host->name ?? $host->customer_id ?? '-' }}</strong></td>
                                     <td>{{ $host->client->name ?? 'N/A' }}</td>
                                     <td>{{ $host->country ?? '-' }}</td>
@@ -201,6 +209,26 @@
     const bulkDeleteInputs = document.getElementById('bulk-delete-inputs');
     const bulkApproveForm = document.getElementById('bulk-approve-form');
     const bulkDeleteForm = document.getElementById('bulk-delete-form');
+
+    document.querySelectorAll('.copy-host-id').forEach(function (button) {
+        button.addEventListener('click', async function () {
+            const hostId = button.dataset.copyId;
+
+            try {
+                await navigator.clipboard.writeText(hostId);
+            } catch (error) {
+                const fallbackInput = document.createElement('textarea');
+                fallbackInput.value = hostId;
+                document.body.appendChild(fallbackInput);
+                fallbackInput.select();
+                document.execCommand('copy');
+                fallbackInput.remove();
+            }
+
+            button.textContent = 'Copied';
+            setTimeout(function () { button.textContent = 'Copy'; }, 1200);
+        });
+    });
 
     function getSelectedHostIds() {
         return Array.from(hostCheckboxes)

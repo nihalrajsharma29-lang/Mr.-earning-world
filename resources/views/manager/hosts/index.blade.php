@@ -25,6 +25,9 @@
     .btn-approve { background: #16a34a; color: white; }
     .btn-reject { background: #dc2626; color: white; }
     .reject-form input { min-width: 180px; padding: 10px; border: 1px solid #d1d5db; border-radius: 10px; }
+    .copy-host-id { border: 1px solid #d1d5db; border-radius: 6px; padding: 4px 7px; background: #f9fafb; color: #374151; cursor: pointer; font-size: 11px; }
+    .copy-host-id:hover { background: #e5e7eb; }
+    .host-id-cell { white-space: nowrap; }
     .empty { padding: 50px 20px; text-align: center; color: #6b7280; }
     .toolbar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; align-items: center; }
     .toolbar form { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
@@ -91,7 +94,12 @@
                             @foreach($hosts as $host)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td><strong>{{ $host->customer_id ?? '-' }}</strong></td>
+                                    <td class="host-id-cell">
+                                        <strong>{{ $host->customer_id ?? '-' }}</strong>
+                                        @if($host->customer_id)
+                                            <button type="button" class="copy-host-id" data-copy-id="{{ $host->customer_id }}" title="Copy Host ID">Copy</button>
+                                        @endif
+                                    </td>
                                     <td><strong>{{ $host->name ?? $host->customer_id ?? '-' }}</strong></td>
                                     <td>{{ $host->client->name ?? 'N/A' }}</td>
                                     <td>{{ $host->country ?? '-' }}</td>
@@ -145,3 +153,27 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.querySelectorAll('.copy-host-id').forEach(function (button) {
+        button.addEventListener('click', async function () {
+            const hostId = button.dataset.copyId;
+
+            try {
+                await navigator.clipboard.writeText(hostId);
+            } catch (error) {
+                const fallbackInput = document.createElement('textarea');
+                fallbackInput.value = hostId;
+                document.body.appendChild(fallbackInput);
+                fallbackInput.select();
+                document.execCommand('copy');
+                fallbackInput.remove();
+            }
+
+            button.textContent = 'Copied';
+            setTimeout(function () { button.textContent = 'Copy'; }, 1200);
+        });
+    });
+</script>
+@endpush
