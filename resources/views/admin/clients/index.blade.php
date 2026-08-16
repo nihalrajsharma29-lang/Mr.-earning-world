@@ -61,7 +61,8 @@
 
 <div class="bg-white shadow rounded-lg overflow-hidden">
 
-    <table class="w-full">
+    <div class="overflow-x-auto">
+    <table class="w-full min-w-[1100px]">
 
         <thead class="bg-gray-200">
 
@@ -201,4 +202,5 @@
         </tbody>
 
     </table>
+    </div>
 @endsection

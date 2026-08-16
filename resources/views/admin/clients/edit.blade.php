@@ -46,7 +46,7 @@
         <div class="mb-4">
 
             <label class="block font-semibold mb-2">
-                Email
+                Email / Login ID
             </label>
 
             <input
@@ -148,6 +148,26 @@
 
         </div>
 
+        <div class="flex flex-wrap gap-3 mb-6">
+
+            <button
+                type="submit"
+                class="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700"
+            >
+                Update Client
+            </button>
+
+            <a
+                href="{{ route('clients.index') }}"
+                class="bg-gray-500 text-white px-6 py-3 rounded hover:bg-gray-600"
+            >
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
         <div class="mb-6">
             <div class="bg-gray-50 p-4 rounded mb-3">
                 <strong>Login:</strong> {{ $client->user ? $client->user->email : 'No login created for this client yet.' }}
@@ -195,26 +215,6 @@
                 </form>
             </div>
         </div>
-
-        <div class="flex gap-3">
-
-            <button
-                type="submit"
-                class="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700"
-            >
-                Update Client
-            </button>
-
-            <a
-                href="{{ route('clients.index') }}"
-                class="bg-gray-500 text-white px-6 py-3 rounded hover:bg-gray-600"
-            >
-                Cancel
-            </a>
-
-        </div>
-
-    </form>
 
 </div>
 

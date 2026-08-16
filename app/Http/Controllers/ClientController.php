@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\Rule;
 
 class ClientController extends BaseController
 {
@@ -196,22 +197,38 @@ class ClientController extends BaseController
      */
     public function update(Request $request, Client $client)
     {
-        $request->validate([
+        $user = $client->user ?? User::where('email', $client->email)
+            ->where('role', 'client')
+            ->first();
+
+        $validated = $request->validate([
             'name'  => 'required',
-            'email' => 'required|email|unique:clients,email,' . $client->id,
             'phone' => 'required',
             'commission_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('clients', 'email')->ignore($client->id),
+                Rule::unique('users', 'email')->ignore($user?->id),
+            ],
         ]);
 
         $client->update([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'company' => $request->company,
-            'address' => $request->address,
-            'status' => $request->status,
-            'commission_percentage' => $request->input('commission_percentage', 0),
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'company' => $request->input('company'),
+            'address' => $request->input('address'),
+            'status' => $request->input('status'),
+            'commission_percentage' => $validated['commission_percentage'] ?? 0,
         ]);
+
+        if ($user) {
+            $user->update([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+            ]);
+        }
 
         return redirect()->route('clients.index')
             ->with('success', 'Client Updated Successfully.');

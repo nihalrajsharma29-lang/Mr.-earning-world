@@ -221,13 +221,13 @@ class HostApprovalController extends BaseController
      */
     public function reject(Request $request, Customer $customer)
     {
-        $request->validate([
-            'rejection_reason' => 'nullable|string|max:1000',
+        $validated = $request->validate([
+            'rejection_reason' => 'required|string|max:1000',
         ]);
 
         $customer->update([
             'approval_status' => 'rejected',
-            'rejection_reason' => $request->rejection_reason,
+            'rejection_reason' => $validated['rejection_reason'],
         ]);
 
         AdminAuditLog::create([
@@ -237,7 +237,7 @@ class HostApprovalController extends BaseController
                 '%s rejected host "%s"%s.',
                 auth()->user()->name,
                 $customer->name ?: $customer->username ?: 'Unknown Host',
-                $request->filled('rejection_reason') ? ' with reason: ' . $request->rejection_reason : ''
+                ' with reason: ' . $validated['rejection_reason']
             ),
             'ip' => request()->ip(),
             'user_agent' => request()->userAgent(),

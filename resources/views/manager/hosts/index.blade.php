@@ -107,24 +107,22 @@
                                     </td>
                                     <td>{{ $host->rejection_reason ?: '-' }}</td>
                                     <td>
-                                        @if($host->approval_status === 'approved')
-                                            <span class="badge badge-approved">Approved</span>
-                                        @else
-                                            <div class="actions">
+                                        <div class="actions">
+                                            @if($host->approval_status !== 'approved')
                                                 <form action="{{ route('manager.hosts.approve', $host) }}" method="POST">
                                                     @csrf
                                                     @method('PATCH')
                                                     <button type="submit" class="btn btn-approve">Approve</button>
                                                 </form>
+                                            @endif
 
-                                                <form action="{{ route('manager.hosts.reject', $host) }}" method="POST" class="reject-form">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <input type="text" name="rejection_reason" placeholder="Reject reason">
-                                                    <button type="submit" class="btn btn-reject">Reject</button>
-                                                </form>
-                                            </div>
-                                        @endif
+                                            <form action="{{ route('manager.hosts.reject', $host) }}" method="POST" class="reject-form">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="text" name="rejection_reason" placeholder="Reject reason" required maxlength="1000">
+                                                <button type="submit" class="btn btn-reject">Reject</button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

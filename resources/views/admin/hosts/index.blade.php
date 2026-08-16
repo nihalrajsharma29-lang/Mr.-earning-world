@@ -134,9 +134,20 @@
                                     <td>{{ $host->rejection_reason ?: '-' }}</td>
                                     <td>
                                         <div class="actions-inline">
-                                            @if($host->approval_status !== 'pending')
-                                                <span class="badge {{ $host->approval_status === 'approved' ? 'badge-approved' : 'badge-rejected' }}">No action required</span>
+                                            @if($host->approval_status !== 'approved')
+                                                <form action="{{ route('admin.hosts.approve', $host) }}" method="POST">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit" class="btn btn-approve">Approve</button>
+                                                </form>
                                             @endif
+
+                                            <form action="{{ route('admin.hosts.reject', $host) }}" method="POST" class="reject-form">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="text" name="rejection_reason" placeholder="Reject reason" required maxlength="1000">
+                                                <button type="submit" class="btn btn-reject">Reject</button>
+                                            </form>
 
                                             <form action="{{ route('admin.hosts.reassign', $host) }}" method="POST" style="display: flex; gap: 8px; align-items: center;">
                                                 @csrf
