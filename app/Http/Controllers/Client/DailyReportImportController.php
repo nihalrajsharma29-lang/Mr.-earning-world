@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Client\BaseController;
 use App\Imports\DailyReportImport;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Excel as ExcelReader;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -50,7 +51,9 @@ class DailyReportImportController extends BaseController
 
             Excel::import(
                 $import,
-                $request->file('file')
+                $request->file('file'),
+                null,
+                $this->readerType($request->file('file'))
             );
 
             $imported = $import->getImportedRows();
@@ -98,6 +101,16 @@ class DailyReportImportController extends BaseController
         $expected = ['date', 'dt', 'reportdate'];
 
         return count(array_intersect($expected, $normalizedHeaders)) > 0;
+    }
+
+    private function readerType(UploadedFile $file): string
+    {
+        return match (strtolower($file->getClientOriginalExtension())) {
+            'xlsx' => ExcelReader::XLSX,
+            'xls' => ExcelReader::XLS,
+            'csv' => ExcelReader::CSV,
+            default => throw new \InvalidArgumentException('Unsupported import file type.'),
+        };
     }
 
     private function normalizeHeader(string $value): string
