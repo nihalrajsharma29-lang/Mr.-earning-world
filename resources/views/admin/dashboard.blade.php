@@ -82,6 +82,24 @@
         </p>
     </a>
 
+    {{-- Pending Host Approvals --}}
+    <a
+        href="{{ route('admin.hosts.index', ['status' => 'pending']) }}"
+        class="block bg-yellow-50 p-6 rounded-xl shadow hover:shadow-lg transition"
+    >
+        <h3 class="text-yellow-700 text-lg">
+            Pending Host Approvals
+        </h3>
+
+        <h1 class="text-4xl font-bold mt-3 text-yellow-800">
+            {{ $pendingHosts }}
+        </h1>
+
+        <p class="text-yellow-700 mt-3">
+            Review pending hosts →
+        </p>
+    </a>
+
     {{-- Manage Account --}}
     <a
         href="{{ route('profile.edit') }}"

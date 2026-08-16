@@ -140,14 +140,14 @@
                                                     @method('PATCH')
                                                     <button type="submit" class="btn btn-approve">Approve</button>
                                                 </form>
-                                            @endif
 
-                                            <form action="{{ route('admin.hosts.reject', $host) }}" method="POST" class="reject-form">
-                                                @csrf
-                                                @method('PATCH')
-                                                <input type="text" name="rejection_reason" placeholder="Reject reason" required maxlength="1000">
-                                                <button type="submit" class="btn btn-reject">Reject</button>
-                                            </form>
+                                                <form action="{{ route('admin.hosts.reject', $host) }}" method="POST" class="reject-form">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <input type="text" name="rejection_reason" placeholder="Reject reason" required maxlength="1000">
+                                                    <button type="submit" class="btn btn-reject">Reject</button>
+                                                </form>
+                                            @endif
 
                                             <form action="{{ route('admin.hosts.reassign', $host) }}" method="POST" style="display: flex; gap: 8px; align-items: center;">
                                                 @csrf

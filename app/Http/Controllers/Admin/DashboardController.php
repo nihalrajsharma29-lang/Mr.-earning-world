@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Admin\BaseController;
 use App\Models\DailyReport;
 use App\Models\Client;
+use App\Models\Customer;
 use Illuminate\Http\Request;
 
 class DashboardController extends BaseController
@@ -12,6 +13,7 @@ class DashboardController extends BaseController
     public function index()
     {
         $totalClients = Client::count();
+        $pendingHosts = Customer::where('approval_status', 'pending')->count();
         $totalReports = DailyReport::count();
         $totalSalary = DailyReport::sum('salary_amount');
         $violationReports = DailyReport::whereNotNull('violation_records')
@@ -20,6 +22,7 @@ class DashboardController extends BaseController
 
         return view('admin.dashboard', compact(
             'totalClients',
+            'pendingHosts',
             'totalReports',
             'totalSalary',
             'violationReports'

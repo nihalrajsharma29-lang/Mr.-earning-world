@@ -8,7 +8,7 @@
         Manager Dashboard
     </h1>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-6">
         <a
             href="{{ route('manager.daily.import') }}"
             class="block bg-white p-6 rounded-xl shadow hover:shadow-lg transition"
@@ -91,6 +91,23 @@
 
             <p class="text-blue-600 mt-3">
                 Manage Hosts →
+            </p>
+        </a>
+
+        <a
+            href="{{ route('manager.hosts.index', ['status' => 'pending']) }}"
+            class="block bg-yellow-50 p-6 rounded-xl shadow hover:shadow-lg transition"
+        >
+            <h3 class="text-yellow-700 text-lg">
+                Pending Host Approvals
+            </h3>
+
+            <h1 class="text-4xl font-bold mt-3 text-yellow-800">
+                {{ $pendingHosts }}
+            </h1>
+
+            <p class="text-yellow-700 mt-3">
+                Review pending hosts →
             </p>
         </a>
     </div>
