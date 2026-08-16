@@ -159,6 +159,11 @@ Route::middleware('auth')->group(function () {
         [\App\Http\Controllers\Admin\HostApprovalController::class, 'reject']
     )->name('manager.hosts.reject');
 
+    Route::delete(
+        '/manager/hosts/{customer}',
+        [\App\Http\Controllers\Admin\HostApprovalController::class, 'destroy']
+    )->name('manager.hosts.destroy');
+
     /*
     |--------------------------------------------------------------------------
     | ADMIN - EXCEL IMPORT

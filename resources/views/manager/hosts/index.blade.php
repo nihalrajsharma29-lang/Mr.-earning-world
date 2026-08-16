@@ -108,7 +108,13 @@
                                     <td>{{ $host->rejection_reason ?: '-' }}</td>
                                     <td>
                                         <div class="actions">
-                                            @if($host->approval_status !== 'approved')
+                                            @if($host->approval_status === 'rejected')
+                                                <form action="{{ route('manager.hosts.destroy', $host) }}" method="POST">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-reject" onclick="return confirm('Delete this rejected host?')">Delete</button>
+                                                </form>
+                                            @elseif($host->approval_status !== 'approved')
                                                 <form action="{{ route('manager.hosts.approve', $host) }}" method="POST">
                                                     @csrf
                                                     @method('PATCH')
