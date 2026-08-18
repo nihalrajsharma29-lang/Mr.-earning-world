@@ -50,6 +50,14 @@ class DailyReportController extends BaseController
 
         $availableColumns = ReportColumnManager::visible($reportType);
         $allowedColumnKeys = collect($availableColumns)->pluck('key')->all();
+        $defaultSortColumn = match ($reportType) {
+            'payment_report' => 'weekly_final_coins_hosts',
+            'daily_report' => 'total_coins',
+            default => null,
+        };
+        $defaultSortColumn = in_array($defaultSortColumn, $allowedColumnKeys, true)
+            ? $defaultSortColumn
+            : null;
 
         /*
         |--------------------------------------------------------------------------
@@ -187,10 +195,10 @@ class DailyReportController extends BaseController
             ];
         }
 
-        $sortColumn = in_array($request->input('sort_column'), $allowedColumnKeys, true)
-            ? $request->input('sort_column')
-            : null;
-        $sortDirection = $request->input('sort_direction') === 'desc' ? 'desc' : 'asc';
+        $sortColumn = in_array($request->input('sort_column', $defaultSortColumn), $allowedColumnKeys, true)
+            ? $request->input('sort_column', $defaultSortColumn)
+            : $defaultSortColumn;
+        $sortDirection = $request->input('sort_direction', 'desc') === 'asc' ? 'asc' : 'desc';
 
         if ($sortColumn) {
             $reports = $reports->sortBy(function ($report) use ($sortColumn) {
@@ -220,7 +228,7 @@ class DailyReportController extends BaseController
 
         return view(
             'client.daily-reports.index',
-            compact('reports', 'client', 'reportType', 'weeklyDate', 'totalHostCount', 'workingHostCount', 'paymentReportColumns', 'paymentSummary', 'violationReportColumns', 'dailyReportColumns')
+            compact('reports', 'client', 'reportType', 'weeklyDate', 'totalHostCount', 'workingHostCount', 'paymentReportColumns', 'paymentSummary', 'violationReportColumns', 'dailyReportColumns', 'defaultSortColumn')
         );
     }
 }

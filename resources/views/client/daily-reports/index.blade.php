@@ -201,15 +201,15 @@
                 <select id="sort_column" name="sort_column">
                     <option value="">Default order</option>
                     @foreach($activeColumns as $column)
-                        <option value="{{ $column['key'] }}" {{ request('sort_column') === $column['key'] ? 'selected' : '' }}>{{ $column['label'] }}</option>
+                        <option value="{{ $column['key'] }}" {{ request('sort_column', $defaultSortColumn) === $column['key'] ? 'selected' : '' }}>{{ $column['label'] }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="filter-group">
                 <label for="sort_direction">Sort direction</label>
                 <select id="sort_direction" name="sort_direction">
-                    <option value="asc" {{ request('sort_direction', 'asc') === 'asc' ? 'selected' : '' }}>Low to High / A-Z</option>
-                    <option value="desc" {{ request('sort_direction') === 'desc' ? 'selected' : '' }}>High to Low / Z-A</option>
+                    <option value="asc" {{ request('sort_direction', 'desc') === 'asc' ? 'selected' : '' }}>Low to High / A-Z</option>
+                    <option value="desc" {{ request('sort_direction', 'desc') === 'desc' ? 'selected' : '' }}>High to Low / Z-A</option>
                 </select>
             </div>
 
