@@ -192,7 +192,26 @@ class DailyReport extends Model
             return $value;
         }
 
-        return data_get($this->extra_data ?? [], $key);
+        $extraData = $this->extra_data ?? [];
+        $value = data_get($extraData, $key);
+
+        if ($value !== null || ! is_array($extraData)) {
+            return $value;
+        }
+
+        // Excel headings are stored without separators, while custom report
+        // source keys are usually saved with underscores.
+        $normalizedKey = strtolower((string) preg_replace('/[^a-z0-9]+/', '', $key));
+
+        foreach ($extraData as $extraKey => $extraValue) {
+            $normalizedExtraKey = strtolower((string) preg_replace('/[^a-z0-9]+/', '', (string) $extraKey));
+
+            if ($normalizedExtraKey === $normalizedKey) {
+                return $extraValue;
+            }
+        }
+
+        return null;
     }
 
     public function getAgentFeeUsdAttribute($value): mixed
