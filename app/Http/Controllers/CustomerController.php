@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Client\BaseController;
 use App\Models\Customer;
+use App\Models\SkippedImportId;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -94,6 +95,8 @@ class CustomerController extends BaseController
                 'status' => 'Active',
                 'approval_status' => 'pending',
             ]);
+
+            SkippedImportId::where('host_id', $hostId)->delete();
 
             $createdCount++;
         }

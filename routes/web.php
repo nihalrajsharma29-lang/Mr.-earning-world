@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DailyReportImportController as AdminDailyReportImportController;
 use App\Http\Controllers\Admin\DailyReportController as AdminDailyReportController;
 use App\Http\Controllers\Admin\HostApprovalController;
+use App\Http\Controllers\Admin\SkippedImportIdController;
 
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\Client\DailyReportImportController as ClientDailyReportImportController;
@@ -124,6 +125,26 @@ Route::middleware('auth')->group(function () {
         [\App\Http\Controllers\Admin\DailyReportController::class, 'index']
     )->name('manager.reports');
 
+    Route::get(
+        '/manager/skipped-import-ids',
+        [SkippedImportIdController::class, 'index']
+    )->name('manager.skipped-import-ids.index');
+
+    Route::patch(
+        '/manager/skipped-import-ids/{skippedImportId}/reassign',
+        [SkippedImportIdController::class, 'reassign']
+    )->whereNumber('skippedImportId')->name('manager.skipped-import-ids.reassign');
+
+    Route::patch(
+        '/manager/skipped-import-ids/selected/reassign',
+        [SkippedImportIdController::class, 'reassignSelected']
+    )->name('manager.skipped-import-ids.reassign.selected');
+
+    Route::delete(
+        '/manager/skipped-import-ids/selected',
+        [SkippedImportIdController::class, 'destroySelected']
+    )->name('manager.skipped-import-ids.destroy.selected');
+
     Route::delete(
         '/manager/reports/date/{date}',
         [\App\Http\Controllers\Admin\DailyReportController::class, 'destroyByDate']
@@ -150,6 +171,21 @@ Route::middleware('auth')->group(function () {
     )->name('manager.hosts.index');
 
     Route::patch(
+        '/manager/hosts/selected/reassign',
+        [\App\Http\Controllers\Admin\HostApprovalController::class, 'reassignSelected']
+    )->name('manager.hosts.reassign.selected');
+
+    Route::get(
+        '/manager/hosts/create',
+        [\App\Http\Controllers\Admin\HostApprovalController::class, 'create']
+    )->name('manager.hosts.create');
+
+    Route::post(
+        '/manager/hosts',
+        [\App\Http\Controllers\Admin\HostApprovalController::class, 'store']
+    )->name('manager.hosts.store');
+
+    Route::patch(
         '/manager/hosts/{customer}/approve',
         [\App\Http\Controllers\Admin\HostApprovalController::class, 'approve']
     )->name('manager.hosts.approve');
@@ -174,6 +210,26 @@ Route::middleware('auth')->group(function () {
         '/admin/daily-reports/import',
         [AdminDailyReportImportController::class, 'create']
     )->name('admin.daily.import');
+
+    Route::get(
+        '/admin/skipped-import-ids',
+        [SkippedImportIdController::class, 'index']
+    )->name('admin.skipped-import-ids.index');
+
+    Route::patch(
+        '/admin/skipped-import-ids/{skippedImportId}/reassign',
+        [SkippedImportIdController::class, 'reassign']
+    )->whereNumber('skippedImportId')->name('admin.skipped-import-ids.reassign');
+
+    Route::patch(
+        '/admin/skipped-import-ids/selected/reassign',
+        [SkippedImportIdController::class, 'reassignSelected']
+    )->name('admin.skipped-import-ids.reassign.selected');
+
+    Route::delete(
+        '/admin/skipped-import-ids/selected',
+        [SkippedImportIdController::class, 'destroySelected']
+    )->name('admin.skipped-import-ids.destroy.selected');
 
     Route::post(
         '/admin/daily-reports/import',
@@ -281,10 +337,25 @@ Route::middleware('auth')->group(function () {
         [HostApprovalController::class, 'index']
     )->name('admin.hosts.index');
 
+    Route::get(
+        '/admin/hosts/create',
+        [HostApprovalController::class, 'create']
+    )->name('admin.hosts.create');
+
+    Route::post(
+        '/admin/hosts',
+        [HostApprovalController::class, 'store']
+    )->name('admin.hosts.store');
+
     Route::patch(
         '/admin/hosts/selected/approve',
         [HostApprovalController::class, 'approveSelected']
     )->name('admin.hosts.approve.selected');
+
+    Route::patch(
+        '/admin/hosts/selected/reassign',
+        [HostApprovalController::class, 'reassignSelected']
+    )->name('admin.hosts.reassign.selected');
 
     Route::delete(
         '/admin/hosts/selected',

@@ -72,6 +72,7 @@
                 <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">🏠 Dashboard</a>
                 <a href="{{ route('clients.index') }}" class="{{ request()->routeIs('clients.*') ? 'active' : '' }}">👥 Clients</a>
                 <a href="{{ route('admin.daily.import') }}" class="{{ request()->routeIs('admin.daily.import*') ? 'active' : '' }}">� Import Reports</a>
+                <a href="{{ route('admin.skipped-import-ids.index') }}" class="{{ request()->routeIs('admin.skipped-import-ids.*') ? 'active' : '' }}">🔎 Skipped Host IDs</a>
                 <a href="{{ route('admin.reports', ['report_type' => 'daily_report']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type', 'daily_report') === 'daily_report' ? 'active' : '' }}">📅 Daily Report</a>
                 <a href="{{ route('admin.reports', ['report_type' => 'payment_report']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type') === 'payment_report' ? 'active' : '' }}">💰 Payment Report</a>
                 <a href="{{ route('admin.reports', ['report_type' => 'violation_records']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type') === 'violation_records' ? 'active' : '' }}">⚠️ Violation Records</a>

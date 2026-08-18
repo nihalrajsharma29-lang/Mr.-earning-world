@@ -38,8 +38,20 @@
     .alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
     .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
     .empty { padding: 48px; text-align: center; color: #6b7280; }
-    @media (max-width: 960px) { .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filter-form { grid-template-columns: 1fr; } }
-    @media (max-width: 660px) { .summary-grid { grid-template-columns: 1fr; } .weekly-date-display { width: 100%; } }
+    @media (max-width: 960px) {
+        .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .filter-form { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 660px) {
+        .summary-grid { grid-template-columns: 1fr; }
+        .panel-body { padding: 16px; }
+        .summary-card { padding: 18px; }
+        .summary-value { font-size: 26px; }
+        .weekly-date-display { width: 100%; flex-wrap: wrap; }
+        .filter-form .btn,
+        .filter-form .btn-secondary { width: 100%; }
+        .table-wrapper { margin: 0 -16px; padding: 0 16px; }
+    }
 </style>
 @endpush
 

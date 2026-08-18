@@ -141,31 +141,11 @@ class DailyReportController extends BaseController
             ->latest('dt')
             ->get();
 
-        $totalHostCount = $reportType === 'daily_report'
-            ? $reports->whereNotNull('host_id')->unique('host_id')->count()
-            : 0;
-        $workingHostCount = $reportType === 'daily_report'
-            ? $reports->filter(fn ($report) => (float) ($report->total_coins ?? 0) > 0)->whereNotNull('host_id')->unique('host_id')->count()
-            : 0;
-
         if ($reportType === 'payment_report' && ! $weeklyDate) {
             $weeklyDate = $reports
                 ->first(fn ($report) => $report->weekly_date !== null)
                 ?->weekly_date
                 ?->toDateString();
-        }
-
-        $paymentSummary = null;
-        if ($reportType === 'payment_report') {
-            $agentFeeTotal = (float) $reports->sum(fn ($report) => (float) ($report->agent_fee_usd ?? 0));
-            $agentOneTimeBonusTotal = (float) $reports->sum(fn ($report) => (float) ($report->agent_one_time_bonus_usd ?? 0));
-
-            $paymentSummary = [
-                'total_host_salary' => (float) $reports->sum(fn ($report) => (float) ($report->hosts_final_reward_usd ?? 0)),
-                'agent_fee_total' => $agentFeeTotal,
-                'agent_one_time_bonus_total' => $agentOneTimeBonusTotal,
-                'total_salary' => $agentFeeTotal + $agentOneTimeBonusTotal,
-            ];
         }
 
         $filterColumn = in_array($request->input('filter_column'), $allowedColumnKeys, true)
@@ -181,6 +161,30 @@ class DailyReportController extends BaseController
 
                 return str_contains(strtolower((string) $value), strtolower($filterValue));
             })->values();
+        }
+
+        $totalHostCount = $reportType === 'daily_report'
+            ? $reports->whereNotNull('host_id')->unique('host_id')->count()
+            : 0;
+        $workingHostCount = $reportType === 'daily_report'
+            ? $reports
+                ->filter(fn ($report) => (float) ($report->total_coins ?? 0) > 0)
+                ->whereNotNull('host_id')
+                ->unique('host_id')
+                ->count()
+            : 0;
+
+        $paymentSummary = null;
+        if ($reportType === 'payment_report') {
+            $agentFeeTotal = (float) $reports->sum(fn ($report) => (float) ($report->agent_fee_usd ?? 0));
+            $agentOneTimeBonusTotal = (float) $reports->sum(fn ($report) => (float) ($report->agent_one_time_bonus_usd ?? 0));
+
+            $paymentSummary = [
+                'total_host_salary' => (float) $reports->sum(fn ($report) => (float) ($report->hosts_final_reward_usd ?? 0)),
+                'agent_fee_total' => $agentFeeTotal,
+                'agent_one_time_bonus_total' => $agentOneTimeBonusTotal,
+                'total_salary' => $agentFeeTotal + $agentOneTimeBonusTotal,
+            ];
         }
 
         $sortColumn = in_array($request->input('sort_column'), $allowedColumnKeys, true)

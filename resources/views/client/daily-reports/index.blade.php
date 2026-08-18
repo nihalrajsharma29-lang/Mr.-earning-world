@@ -86,6 +86,10 @@
         .summary-grid { grid-template-columns: 1fr; }
         .filter-form { flex-direction: column; align-items: stretch; }
         .filter-group input { width: 100%; }
+        .filter-btn, .reset-btn { width: 100%; }
+        .filter-card { padding: 16px; }
+        .summary-card { padding: 18px; }
+        .table-wrapper { margin: 0 -16px; padding: 0 16px; }
     }
 </style>
 @endpush

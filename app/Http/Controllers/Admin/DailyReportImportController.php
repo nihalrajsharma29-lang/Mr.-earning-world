@@ -102,7 +102,9 @@ class DailyReportImportController extends BaseController
             $import = new DailyReportImport(
                 null,
                 $request->report_type,
-                $request->input('report_type') === 'payment_report' ? $request->input('weekly_date') : null
+                $request->input('report_type') === 'payment_report' ? $request->input('weekly_date') : null,
+                $fileName,
+                auth()->id()
             );
 
             Excel::import(

@@ -79,9 +79,23 @@
                 </form>
 
                 <div class="bulk-actions">
+                    <select id="bulk-reassign-client" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 10px; min-width: 170px;">
+                        <option value="">Select Client</option>
+                        @foreach($clients as $clientOption)
+                            <option value="{{ $clientOption->id }}">{{ $clientOption->name }}</option>
+                        @endforeach
+                    </select>
+                    <button type="button" id="reassign-selected-btn" class="btn btn-approve" style="background: #0f766e;">Reassign</button>
                     <button type="button" id="approve-selected-btn" class="btn btn-approve">Approved</button>
                     <button type="button" id="delete-selected-btn" class="btn btn-reject" style="background: #7f1d1d;">Delete</button>
                 </div>
+
+                <form id="bulk-reassign-form" action="{{ route('admin.hosts.reassign.selected') }}" method="POST" style="display: none;">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="client_id" id="bulk-reassign-client-input">
+                    <div id="bulk-reassign-inputs"></div>
+                </form>
 
                 <form id="bulk-approve-form" action="{{ route('admin.hosts.approve.selected') }}" method="POST" style="display: none;">
                     @csrf
@@ -110,7 +124,6 @@
                                 <th>Submitted Date</th>
                                 <th>Status</th>
                                 <th>Reason</th>
-                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -140,49 +153,6 @@
                                         @endif
                                     </td>
                                     <td>{{ $host->rejection_reason ?: '-' }}</td>
-                                    <td>
-                                        <div class="actions-inline">
-                                            @if($host->approval_status === 'rejected')
-                                                <form action="{{ route('admin.hosts.destroy', $host) }}" method="POST">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-reject" style="background: #7f1d1d;" onclick="return confirm('Delete this rejected host?')">Delete</button>
-                                                </form>
-                                            @else
-                                                @if($host->approval_status !== 'approved')
-                                                    <form action="{{ route('admin.hosts.approve', $host) }}" method="POST">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <button type="submit" class="btn btn-approve">Approve</button>
-                                                    </form>
-
-                                                    <form action="{{ route('admin.hosts.reject', $host) }}" method="POST" class="reject-form">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <input type="text" name="rejection_reason" placeholder="Reject reason" required maxlength="1000">
-                                                        <button type="submit" class="btn btn-reject">Reject</button>
-                                                    </form>
-                                                @endif
-
-                                                <form action="{{ route('admin.hosts.reassign', $host) }}" method="POST" style="display: flex; gap: 8px; align-items: center;">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <select name="client_id" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 10px; min-width: 170px;">
-                                                        @foreach($clients as $clientOption)
-                                                            <option value="{{ $clientOption->id }}" {{ $clientOption->id === $host->client_id ? 'selected' : '' }}>{{ $clientOption->name }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    <button type="submit" class="btn btn-approve" style="background: #0f766e;">Reassign</button>
-                                                </form>
-
-                                                <form action="{{ route('admin.hosts.destroy', $host) }}" method="POST">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-reject" style="background: #7f1d1d;" onclick="return confirm('Delete this host?')">Delete</button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -192,7 +162,7 @@
                 <div class="empty">
                     <div class="empty-icon">📭</div>
                     <h3>No hosts found</h3>
-                    <p>Use the filters above to search by host, client, or status.</p>
+                    <p>Use the filters above to search by host, client, name, or status.</p>
                 </div>
             @endif
         </div>
@@ -205,6 +175,11 @@
     const hostCheckboxes = document.querySelectorAll('.host-select-checkbox');
     const approveSelectedBtn = document.getElementById('approve-selected-btn');
     const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+    const reassignSelectedBtn = document.getElementById('reassign-selected-btn');
+    const bulkReassignClient = document.getElementById('bulk-reassign-client');
+    const bulkReassignClientInput = document.getElementById('bulk-reassign-client-input');
+    const bulkReassignInputs = document.getElementById('bulk-reassign-inputs');
+    const bulkReassignForm = document.getElementById('bulk-reassign-form');
     const bulkApproveInputs = document.getElementById('bulk-approve-inputs');
     const bulkDeleteInputs = document.getElementById('bulk-delete-inputs');
     const bulkApproveForm = document.getElementById('bulk-approve-form');
@@ -299,6 +274,28 @@
 
         fillHiddenInputs(bulkDeleteInputs, selectedIds);
         bulkDeleteForm?.submit();
+    });
+
+    reassignSelectedBtn?.addEventListener('click', function () {
+        const selectedIds = getSelectedHostIds();
+
+        if (selectedIds.length === 0) {
+            alert('Please select at least one host.');
+            return;
+        }
+
+        if (!bulkReassignClient?.value) {
+            alert('Please select a client.');
+            return;
+        }
+
+        if (!confirm('Reassign selected hosts to this client?')) {
+            return;
+        }
+
+        bulkReassignClientInput.value = bulkReassignClient.value;
+        fillHiddenInputs(bulkReassignInputs, selectedIds);
+        bulkReassignForm?.submit();
     });
 </script>
 @endpush

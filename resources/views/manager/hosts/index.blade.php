@@ -72,6 +72,23 @@
                     </div>
                     <button type="submit" class="btn btn-approve" style="background: #2563eb;">Filter</button>
                 </form>
+
+                <div class="bulk-actions" style="display: flex; gap: 8px; align-items: center;">
+                    <select id="bulk-reassign-client" style="padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 10px; min-width: 170px;">
+                        <option value="">Select Client</option>
+                        @foreach($clients as $clientOption)
+                            <option value="{{ $clientOption->id }}">{{ $clientOption->name }}</option>
+                        @endforeach
+                    </select>
+                    <button type="button" id="reassign-selected-btn" class="btn btn-approve" style="background: #0f766e;">Reassign</button>
+                </div>
+
+                <form id="bulk-reassign-form" action="{{ route('manager.hosts.reassign.selected') }}" method="POST" style="display: none;">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="client_id" id="bulk-reassign-client-input">
+                    <div id="bulk-reassign-inputs"></div>
+                </form>
             </div>
 
             @if($hosts->count() > 0)
@@ -79,6 +96,7 @@
                     <table>
                         <thead>
                             <tr>
+                                <th><input type="checkbox" id="select-all-hosts" class="table-checkbox"></th>
                                 <th>#</th>
                                 <th>Host ID</th>
                                 <th>Host</th>
@@ -87,12 +105,12 @@
                                 <th>Submitted Date</th>
                                 <th>Status</th>
                                 <th>Reason</th>
-                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($hosts as $host)
                                 <tr>
+                                    <td><input type="checkbox" class="host-select-checkbox table-checkbox" value="{{ $host->id }}"></td>
                                     <td>{{ $loop->iteration }}</td>
                                     <td class="host-id-cell">
                                         <strong>{{ $host->customer_id ?? '-' }}</strong>
@@ -128,34 +146,71 @@
                                                     @method('PATCH')
                                                     <button type="submit" class="btn btn-approve">Approve</button>
                                                 </form>
-
-                                                <form action="{{ route('manager.hosts.reject', $host) }}" method="POST" class="reject-form">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <input type="text" name="rejection_reason" placeholder="Reject reason" required maxlength="1000">
-                                                    <button type="submit" class="btn btn-reject">Reject</button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @else
-                <div class="empty">
-                    <div style="font-size: 40px; margin-bottom: 14px;">📭</div>
-                    <h3>No hosts found</h3>
-                    <p>Use the filters above to search by host, client, or status.</p>
-                </div>
-            @endif
-        </div>
-    </div>
 @endsection
 
 @push('scripts')
 <script>
+    const selectAllHosts = document.getElementById('select-all-hosts');
+    const hostCheckboxes = document.querySelectorAll('.host-select-checkbox');
+    const reassignSelectedBtn = document.getElementById('reassign-selected-btn');
+    const bulkReassignClient = document.getElementById('bulk-reassign-client');
+    const bulkReassignClientInput = document.getElementById('bulk-reassign-client-input');
+    const bulkReassignInputs = document.getElementById('bulk-reassign-inputs');
+    const bulkReassignForm = document.getElementById('bulk-reassign-form');
+
+    function getSelectedHostIds() {
+        return Array.from(hostCheckboxes)
+            .filter(function (checkbox) { return checkbox.checked; })
+            .map(function (checkbox) { return checkbox.value; });
+    }
+
+    function fillHiddenInputs(container, ids) {
+        container.innerHTML = '';
+        ids.forEach(function (id) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'host_ids[]';
+            input.value = id;
+            container.appendChild(input);
+        });
+    }
+
+    selectAllHosts?.addEventListener('change', function () {
+        hostCheckboxes.forEach(function (checkbox) {
+            checkbox.checked = selectAllHosts.checked;
+        });
+    });
+
+    hostCheckboxes.forEach(function (checkbox) {
+        checkbox.addEventListener('change', function () {
+            if (selectAllHosts) {
+                selectAllHosts.checked = Array.from(hostCheckboxes).every(function (item) { return item.checked; });
+            }
+        });
+    });
+
+    reassignSelectedBtn?.addEventListener('click', function () {
+        const selectedIds = getSelectedHostIds();
+
+        if (selectedIds.length === 0) {
+            alert('Please select at least one host.');
+            return;
+        }
+
+        if (!bulkReassignClient?.value) {
+            alert('Please select a client.');
+            return;
+        }
+
+        if (!confirm('Reassign selected hosts to this client?')) {
+            return;
+        }
+
+        bulkReassignClientInput.value = bulkReassignClient.value;
+        fillHiddenInputs(bulkReassignInputs, selectedIds);
+        bulkReassignForm?.submit();
+    });
+
     document.querySelectorAll('.copy-host-id').forEach(function (button) {
         button.addEventListener('click', async function () {
             const hostId = button.dataset.copyId;

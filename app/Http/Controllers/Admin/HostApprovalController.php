@@ -6,10 +6,21 @@ use App\Http\Controllers\Admin\BaseController;
 use App\Models\AdminAuditLog;
 use App\Models\Client;
 use App\Models\Customer;
+use App\Models\SkippedImportId;
 use Illuminate\Http\Request;
 
 class HostApprovalController extends BaseController
 {
+    private const ALLOWED_COUNTRIES = [
+        'India',
+        'Nigeria',
+        'Morocco',
+        'Thailand',
+        'Philippines',
+        'Malaysia',
+        'Vietnam',
+    ];
+
     public function __construct()
     {
         abort_unless(
@@ -48,6 +59,100 @@ class HostApprovalController extends BaseController
         $clients = Client::orderBy('name')->get(['id', 'name']);
 
         return view($isManager ? 'manager.hosts.index' : 'admin.hosts.index', compact('hosts', 'clients'));
+    }
+
+    /**
+     * Show the form for adding hosts under a client.
+     */
+    public function create()
+    {
+        $clients = Client::orderBy('name')->get(['id', 'name']);
+        $countries = self::ALLOWED_COUNTRIES;
+
+        return view('admin.hosts.create', compact('clients', 'countries'));
+    }
+
+    /**
+     * Add hosts on behalf of a client.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'client_id' => 'required|exists:clients,id',
+            'customer_ids' => 'required|string',
+            'country' => 'required|string|in:'.implode(',', self::ALLOWED_COUNTRIES),
+        ]);
+
+        $uniqueIds = collect(preg_split('/[\r\n,]+/', $validated['customer_ids']) ?: [])
+            ->map(fn ($id) => trim((string) $id))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($uniqueIds->isEmpty()) {
+            return back()->withErrors(['customer_ids' => 'Please enter at least one valid Host ID.'])->withInput();
+        }
+
+        if ($uniqueIds->count() > 50) {
+            return back()->withErrors(['customer_ids' => 'You can add up to 50 Host IDs at once.'])->withInput();
+        }
+
+        $existingIds = Customer::query()
+            ->whereIn('customer_id', $uniqueIds)
+            ->pluck('customer_id')
+            ->all();
+        $existingMap = array_fill_keys($existingIds, true);
+        $createdCount = 0;
+        $skippedCount = 0;
+
+        foreach ($uniqueIds as $hostId) {
+            if (isset($existingMap[$hostId])) {
+                $skippedCount++;
+                continue;
+            }
+
+            Customer::create([
+                'client_id' => $validated['client_id'],
+                'customer_id' => $hostId,
+                'name' => $hostId,
+                'country' => $validated['country'],
+                'status' => 'Active',
+                'approval_status' => 'approved',
+                'approved_at' => now(),
+            ]);
+
+            SkippedImportId::where('host_id', $hostId)->delete();
+
+            $createdCount++;
+        }
+
+        if ($createdCount === 0) {
+            return back()->withErrors(['customer_ids' => 'All provided Host IDs already exist.'])->withInput();
+        }
+
+        $client = Client::find($validated['client_id']);
+        AdminAuditLog::create([
+            'admin_id' => auth()->id(),
+            'client_id' => $client->id,
+            'action' => 'add_host_for_client',
+            'details' => sprintf(
+                '%s added %d host(s) under client "%s": %s.',
+                auth()->user()->name,
+                $createdCount,
+                $client->name,
+                $uniqueIds->reject(fn ($id) => isset($existingMap[$id]))->implode(', ')
+            ),
+            'ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+
+        $message = "{$createdCount} host(s) added successfully under {$client->name}.";
+        if ($skippedCount > 0) {
+            $message .= " {$skippedCount} duplicate ID(s) were skipped.";
+        }
+
+        return redirect()->route(auth()->user()->role === 'manager' ? 'manager.hosts.create' : 'admin.hosts.create')
+            ->with('success', $message);
     }
 
     /**
@@ -117,6 +222,39 @@ class HostApprovalController extends BaseController
         ]);
 
         return back()->with('success', "{$updated} host(s) approved successfully.");
+    }
+
+    /**
+     * Reassign selected hosts to one client.
+     */
+    public function reassignSelected(Request $request)
+    {
+        $validated = $request->validate([
+            'host_ids' => 'required|array|min:1',
+            'host_ids.*' => 'integer|exists:customers,id',
+            'client_id' => 'required|exists:clients,id',
+        ]);
+
+        $updated = Customer::query()
+            ->whereIn('id', $validated['host_ids'])
+            ->update(['client_id' => $validated['client_id']]);
+
+        $client = Client::findOrFail($validated['client_id']);
+        AdminAuditLog::create([
+            'admin_id' => auth()->id(),
+            'client_id' => $client->id,
+            'action' => 'reassign_selected_hosts',
+            'details' => sprintf(
+                '%s reassigned %d selected host(s) to client "%s".',
+                auth()->user()->name,
+                $updated,
+                $client->name
+            ),
+            'ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+
+        return back()->with('success', "{$updated} host(s) reassigned to {$client->name} successfully.");
     }
 
     /**

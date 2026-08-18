@@ -22,6 +22,7 @@ class Customer extends Model
         'category',
         'status',
         'approval_status',
+        'approved_at',
         'rejection_reason',
         'joining_date',
         'address',

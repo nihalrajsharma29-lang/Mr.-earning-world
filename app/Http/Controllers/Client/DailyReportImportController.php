@@ -46,7 +46,11 @@ class DailyReportImportController extends BaseController
         try {
 
             $import = new DailyReportImport(
-                auth()->user()->client?->id
+                auth()->user()->client?->id,
+                'daily_report',
+                null,
+                $request->file('file')->getClientOriginalName(),
+                auth()->id()
             );
 
             Excel::import(

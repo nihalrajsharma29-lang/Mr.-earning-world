@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\DailyReport;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Models\SkippedImportId;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -35,12 +36,22 @@ class DailyReportImport implements
     private ?int $clientId = null;
     private string $reportType = 'daily_report';
     private ?string $weeklyDate = null;
+    private ?string $sourceFileName = null;
+    private ?int $importedByUserId = null;
 
-    public function __construct(?int $clientId = null, string $reportType = 'daily_report', ?string $weeklyDate = null)
+    public function __construct(
+        ?int $clientId = null,
+        string $reportType = 'daily_report',
+        ?string $weeklyDate = null,
+        ?string $sourceFileName = null,
+        ?int $importedByUserId = null
+    )
     {
         $this->clientId = $clientId;
         $this->reportType = $this->normalizeReportType($reportType);
         $this->weeklyDate = $weeklyDate;
+        $this->sourceFileName = $sourceFileName;
+        $this->importedByUserId = $importedByUserId;
     }
 
     /*
@@ -63,20 +74,18 @@ class DailyReportImport implements
         if ($this->clientId) {
             $commissionRate = (float) (Client::find($this->clientId)?->commission_percentage ?? $commissionRate);
         }
-
         /*
         |--------------------------------------------------------------------------
         | Host ID
         |--------------------------------------------------------------------------
         */
-
         $hostId = $this->normalizeHostId((string) ($this->value(
             $row,
             ['hostid', 'host_id', 'host id', 'host', 'id']
         ) ?? ''));
 
         if ($hostId === '') {
-            return $this->markSkipped();
+            return $this->markSkipped(null, 'Missing Host ID');
         }
 
 
@@ -106,7 +115,7 @@ class DailyReportImport implements
         }
 
         if ($reportDateValue === null) {
-            return $this->markSkipped();
+            return $this->markSkipped($hostId, 'Missing report date', $detectedClientId);
         }
 
         try {
@@ -115,7 +124,7 @@ class DailyReportImport implements
 
         } catch (\Throwable $e) {
 
-            return $this->markSkipped();
+            return $this->markSkipped($hostId, 'Invalid report date', $detectedClientId);
         }
 
         try {
@@ -125,7 +134,7 @@ class DailyReportImport implements
                 $weeklyDate = $weeklyDateValue !== null ? $this->date($weeklyDateValue) : null;
             }
         } catch (\Throwable $e) {
-            return $this->markSkipped();
+            return $this->markSkipped($hostId, 'Invalid weekly date', $detectedClientId);
         }
 
 
@@ -154,7 +163,7 @@ class DailyReportImport implements
         // Only pre-existing host IDs are allowed for all report types.
         if (! $customer) {
             $this->skippedUnknownHostRows++;
-            return $this->markSkipped();
+            return $this->markSkipped($hostId, 'Host ID not found under the selected client', $detectedClientId);
         }
 
 
@@ -178,6 +187,8 @@ class DailyReportImport implements
         if ($country) {
             $customer->update(['country' => $country]);
         }
+
+        SkippedImportId::where('host_id', $hostId)->delete();
 
 
         /*
@@ -225,7 +236,6 @@ class DailyReportImport implements
 
                 'story_status' =>
                     $this->value($row, 'storystatus'),
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -710,11 +720,35 @@ class DailyReportImport implements
         return $this->skippedUnknownHostRows;
     }
 
-    private function markSkipped()
+    private function markSkipped(?string $hostId = null, string $reason = 'Skipped during import', ?int $clientId = null)
     {
         $this->skippedRows++;
 
+        if ($hostId !== null && $hostId !== '') {
+            $clientId = $this->resolveClientIdFromContext($clientId);
+
+            SkippedImportId::create([
+                'host_id' => $hostId,
+                'report_type' => $this->reportType,
+                'client_id' => $clientId,
+                'reason' => $reason,
+                'source_file_name' => $this->sourceFileName,
+                'imported_by_user_id' => $this->importedByUserId,
+            ]);
+        }
+
         return null;
+    }
+
+    private function resolveClientIdFromContext(?int $clientId = null): ?int
+    {
+        $clientId ??= $this->clientId;
+
+        if (! $clientId) {
+            return null;
+        }
+
+        return Client::whereKey($clientId)->exists() ? $clientId : null;
     }
 
 
