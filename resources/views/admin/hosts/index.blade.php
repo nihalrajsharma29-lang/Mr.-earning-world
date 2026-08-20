@@ -36,6 +36,7 @@
     .copy-host-id { border: 1px solid #d1d5db; border-radius: 6px; padding: 4px 7px; background: #f9fafb; color: #374151; cursor: pointer; font-size: 11px; }
     .copy-host-id:hover { background: #e5e7eb; }
     .host-id-cell { white-space: nowrap; }
+    .action-cell { min-width: 260px; }
     @media (max-width: 840px) { .table-wrapper { min-width: 760px; } }
 </style>
 @endpush
@@ -124,6 +125,7 @@
                                 <th>Submitted Date</th>
                                 <th>Status</th>
                                 <th>Reason</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -153,6 +155,18 @@
                                         @endif
                                     </td>
                                     <td>{{ $host->rejection_reason ?: '-' }}</td>
+                                    <td class="action-cell">
+                                        @if($host->approval_status !== 'rejected')
+                                            <form action="{{ route('admin.hosts.reject', $host) }}" method="POST" class="reject-form">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="text" name="rejection_reason" placeholder="Enter reason" required maxlength="1000" aria-label="Rejection reason for {{ $host->customer_id }}">
+                                                <button type="submit" class="btn btn-reject">Reject</button>
+                                            </form>
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>

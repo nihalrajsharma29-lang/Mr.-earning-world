@@ -28,6 +28,7 @@
     .copy-host-id { border: 1px solid #d1d5db; border-radius: 6px; padding: 4px 7px; background: #f9fafb; color: #374151; cursor: pointer; font-size: 11px; }
     .copy-host-id:hover { background: #e5e7eb; }
     .host-id-cell { white-space: nowrap; }
+    .action-cell { min-width: 260px; }
     .empty { padding: 50px 20px; text-align: center; color: #6b7280; }
     .toolbar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; align-items: center; }
     .toolbar form { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
@@ -105,6 +106,7 @@
                                 <th>Submitted Date</th>
                                 <th>Status</th>
                                 <th>Reason</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -116,22 +118,45 @@
                                         <strong>{{ $host->customer_id ?? '-' }}</strong>
                                         @if($host->customer_id)
                                             <button type="button" class="copy-host-id" data-copy-id="{{ $host->customer_id }}" title="Copy Host ID">Copy</button>
-                                        @endif
+                                        <td class="action-cell">
+                                            <div class="actions">
+                                                @if($host->approval_status === 'rejected')
+                                                    <form action="{{ route('manager.hosts.destroy', $host) }}" method="POST">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-reject" onclick="return confirm('Delete this rejected host?')">Delete</button>
+                                                    </form>
+                                                @else
+                                                    @if($host->approval_status !== 'approved')
+                                                        <form action="{{ route('manager.hosts.approve', $host) }}" method="POST">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <button type="submit" class="btn btn-approve">Approve</button>
+                                                        </form>
+                                                    @endif
+                                                    <form action="{{ route('manager.hosts.reject', $host) }}" method="POST" class="reject-form">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <input type="text" name="rejection_reason" placeholder="Enter reason" required maxlength="1000" aria-label="Rejection reason for {{ $host->customer_id }}">
+                                                        <button type="submit" class="btn btn-reject">Reject</button>
+                                                    </form>
+                                                @endif
                                     </td>
-                                    <td><strong>{{ $host->name ?? $host->customer_id ?? '-' }}</strong></td>
-                                    <td>{{ $host->client->name ?? 'N/A' }}</td>
-                                    <td>{{ $host->country ?? '-' }}</td>
-                                    <td>{{ $host->created_at ? $host->created_at->format('d M Y H:i') : '-' }}</td>
-                                    <td>
-                                        @if($host->approval_status === 'approved')
-                                            <span class="badge badge-approved">Approved</span>
-                                        @elseif($host->approval_status === 'rejected')
-                                            <span class="badge badge-rejected">Rejected</span>
-                                        @else
-                                            <span class="badge badge-pending">Pending</span>
-                                        @endif
-                                    </td>
+                                        </td>
                                     <td>{{ $host->rejection_reason ?: '-' }}</td>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="empty">
+                        <div class="empty-icon">📭</div>
+                        <h3>No hosts found</h3>
+                        <p>Use the filters above to search by host, client, name, or status.</p>
+                    </div>
+                @endif
+            </div>
+        </div>
                                     <td>
                                         <div class="actions">
                                             @if($host->approval_status === 'rejected')
