@@ -19,6 +19,9 @@
             <div class="mx-6 mt-5 rounded-lg bg-green-100 border border-green-200 text-green-700 px-4 py-3">
                 {{ session('success') }}
             </div>
+            <div class="p-4">
+                {{ $clients->links() }}
+            </div>
         @endif
 
         @if($clients->isEmpty())

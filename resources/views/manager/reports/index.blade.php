@@ -324,6 +324,9 @@
                         </table>
                     @endif
                 </div>
+                <div style="padding: 16px;">
+                    {{ $reports->links() }}
+                </div>
             @else
                 <div class="empty">No reports found for this filter.</div>
             @endif

@@ -26,7 +26,8 @@ class HostAuditController extends BaseController
         $hosts = Customer::with('client')
             ->where('client_id', $client->id)
             ->latest()
-            ->get();
+            ->paginate(25)
+            ->withQueryString();
 
         return view('client.hosts.audit', compact('hosts'));
     }

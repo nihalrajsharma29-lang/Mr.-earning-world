@@ -68,6 +68,9 @@
                     </tbody>
                 </table>
             </div>
+            <div class="mt-4">
+                {{ $managers->links() }}
+            </div>
         </div>
     </div>
 @endsection

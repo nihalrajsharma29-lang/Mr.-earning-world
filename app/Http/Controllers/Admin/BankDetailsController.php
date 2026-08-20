@@ -6,6 +6,7 @@ use App\Exports\BankDetailsExport;
 use App\Models\Client;
 use App\Models\DailyReport;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -14,6 +15,13 @@ class BankDetailsController extends BaseController
     public function index()
     {
         [$clients, $weeklyDate] = $this->bankDetailsClients();
+        $clients = new LengthAwarePaginator(
+            $clients->forPage((int) request('page', 1), 20)->values(),
+            $clients->count(),
+            20,
+            (int) request('page', 1),
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
 
         return view('admin.bank-details.index', compact('clients', 'weeklyDate'));
     }

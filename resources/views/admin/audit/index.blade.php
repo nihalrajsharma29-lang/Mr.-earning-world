@@ -37,6 +37,9 @@
                     <button type="submit" class="bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-700 font-medium">Clear Audit Log</button>
                 </form>
             </div>
+            <div class="p-4">
+                {{ $logs->links() }}
+            </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

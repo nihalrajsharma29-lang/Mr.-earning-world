@@ -71,6 +71,9 @@
                     </tbody>
                 </table>
             </div>
+            <div class="p-4">
+                {{ $hosts->links() }}
+            </div>
         @else
             <div class="empty">
                 <div class="empty-icon">📋</div>

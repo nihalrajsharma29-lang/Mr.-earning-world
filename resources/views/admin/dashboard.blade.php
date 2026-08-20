@@ -18,7 +18,7 @@
         </h3>
 
         <h1 class="text-4xl font-bold mt-3">
-            {{ \App\Models\Client::count() }}
+            {{ $totalClients }}
         </h1>
 
         <p class="text-blue-600 mt-3">
@@ -56,7 +56,7 @@
         </h3>
 
         <h1 class="text-4xl font-bold mt-3">
-            {{ $totalReports ?? \App\Models\DailyReport::count() }}
+            {{ $totalReports }}
         </h1>
 
         <p class="text-blue-600 mt-3">
@@ -117,7 +117,7 @@
         </h3>
 
         <h1 class="text-4xl font-bold mt-3">
-            {{ \App\Models\Customer::count() }}
+            {{ $totalHosts }}
         </h1>
 
         <p class="text-blue-600 mt-3">
@@ -171,7 +171,7 @@
         </h3>
 
         <h1 class="text-4xl font-bold mt-3">
-            {{ \App\Models\SkippedImportId::query()->distinct('host_id')->count('host_id') }}
+            {{ $skippedHostIds }}
         </h1>
 
         <p class="text-blue-600 mt-3">

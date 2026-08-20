@@ -55,7 +55,7 @@ class HostApprovalController extends BaseController
             });
         }
 
-        $hosts = $query->get();
+        $hosts = $query->paginate(25)->withQueryString();
         $clients = Client::orderBy('name')->get(['id', 'name']);
 
         return view($isManager ? 'manager.hosts.index' : 'admin.hosts.index', compact('hosts', 'clients'));

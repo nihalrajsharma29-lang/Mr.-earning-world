@@ -14,6 +14,7 @@ class DashboardController extends BaseController
     public function index()
     {
         $totalClients = Client::count();
+        $totalHosts = Customer::count();
         $pendingHosts = Customer::where('approval_status', 'pending')->count();
         $totalReports = DailyReport::count();
         $totalSalary = DailyReport::sum('salary_amount');
@@ -23,19 +24,23 @@ class DashboardController extends BaseController
         $dailyReportDates = DailyReport::query()
             ->where('report_type', 'daily_report')
             ->whereNotNull('dt')
-            ->pluck('dt')
-            ->map(fn ($date) => Carbon::parse($date)->toDateString())
-            ->unique()
-            ->sortDesc()
-            ->values();
+            ->select('dt')
+            ->distinct()
+            ->orderByDesc('dt')
+            ->pluck('dt');
+        $skippedHostIds = \App\Models\SkippedImportId::query()
+            ->distinct('host_id')
+            ->count('host_id');
 
         return view('admin.dashboard', compact(
             'totalClients',
+            'totalHosts',
             'pendingHosts',
             'totalReports',
             'totalSalary',
             'violationReports',
-            'dailyReportDates'
+            'dailyReportDates',
+            'skippedHostIds'
         ));
     }
 

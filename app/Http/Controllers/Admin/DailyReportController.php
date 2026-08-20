@@ -8,6 +8,7 @@ use App\Models\AdminAuditLog;
 use App\Models\DailyReport;
 use App\Support\ReportColumnManager;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 
 class DailyReportController extends BaseController
@@ -191,6 +192,15 @@ class DailyReportController extends BaseController
                     : $report->columnValue($sortColumn);
             }, SORT_NATURAL | SORT_FLAG_CASE, $sortDirection === 'desc')->values();
         }
+
+        $reportsPerPage = 50;
+        $reports = new LengthAwarePaginator(
+            $reports->forPage((int) $request->input('page', 1), $reportsPerPage)->values(),
+            $reports->count(),
+            $reportsPerPage,
+            (int) $request->input('page', 1),
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
         $paymentReportColumns = $reportType === 'payment_report'
             ? ReportColumnManager::visible('payment_report')

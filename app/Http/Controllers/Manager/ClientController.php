@@ -19,7 +19,8 @@ class ClientController extends BaseController
                     ->orWhere('company', 'like', "%{$search}%");
             })
             ->latest()
-            ->get();
+            ->paginate(20)
+            ->withQueryString();
 
         return view('manager.clients.index', compact('clients', 'search'));
     }

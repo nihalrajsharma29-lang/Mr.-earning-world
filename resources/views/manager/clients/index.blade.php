@@ -9,6 +9,9 @@
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">Client Management</h1>
             </div>
+            <div class="p-4">
+                {{ $clients->links() }}
+            </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">

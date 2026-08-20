@@ -11,7 +11,7 @@ class ManagerController extends Controller
 {
     public function index()
     {
-        $managers = User::where('role', 'manager')->latest()->get();
+        $managers = User::where('role', 'manager')->latest()->paginate(20);
 
         return view('admin.managers.index', compact('managers'));
     }

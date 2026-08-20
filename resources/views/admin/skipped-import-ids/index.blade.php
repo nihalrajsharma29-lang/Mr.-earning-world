@@ -116,6 +116,9 @@
                 <div class="empty">No skipped import IDs found.</div>
             @endif
         </div>
+            <div class="p-4">
+                {{ $skippedIds->links() }}
+            </div>
     </div>
 @endsection
 

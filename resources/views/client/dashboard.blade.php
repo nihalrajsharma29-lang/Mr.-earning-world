@@ -191,19 +191,19 @@
     <div class="stats">
         <div class="stat-card">
             <div class="stat-title">Total Hosts</div>
-            <div class="stat-value">{{ auth()->user()->client?->customers?->count() ?? 0 }}</div>
+            <div class="stat-value">{{ $totalHosts }}</div>
             <div class="stat-description">Hosts submitted by your account</div>
         </div>
 
         <div class="stat-card">
             <div class="stat-title">Pending Approvals</div>
-            <div class="stat-value">{{ auth()->user()->client?->customers?->where('approval_status', 'pending')->count() ?? 0 }}</div>
+            <div class="stat-value">{{ $pendingHosts }}</div>
             <div class="stat-description">Hosts waiting for admin review</div>
         </div>
 
         <div class="stat-card">
             <div class="stat-title">Approved Hosts</div>
-            <div class="stat-value">{{ auth()->user()->client?->customers?->where('approval_status', 'approved')->count() ?? 0 }}</div>
+            <div class="stat-value">{{ $approvedHosts }}</div>
             <div class="stat-description">Hosts currently approved</div>
         </div>
     </div>
@@ -215,7 +215,7 @@
         </div>
 
         <div class="table-wrapper">
-            @if(auth()->user()->client?->customers?->count() > 0)
+            @if($hosts->isNotEmpty())
                 <table>
                     <thead>
                         <tr>
@@ -226,7 +226,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach(auth()->user()->client->customers as $host)
+                        @foreach($hosts as $host)
                             <tr>
                                 <td>{{ $host->customer_id ?? '-' }}</td>
                                 <td>{{ $host->country ?? '-' }}</td>

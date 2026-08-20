@@ -35,7 +35,7 @@
             </h3>
 
             <h1 class="text-4xl font-bold mt-3">
-                {{ \App\Models\DailyReport::where('report_type', 'daily_report')->count() }}
+                {{ $dailyReports }}
             </h1>
 
             <p class="text-blue-600 mt-3">
@@ -52,7 +52,7 @@
             </h3>
 
             <h1 class="text-4xl font-bold mt-3">
-                {{ \App\Models\DailyReport::where('report_type', 'payment_report')->count() }}
+                {{ $paymentReports }}
             </h1>
 
             <p class="text-blue-600 mt-3">
@@ -69,7 +69,7 @@
             </h3>
 
             <h1 class="text-4xl font-bold mt-3">
-                {{ \App\Models\DailyReport::where('report_type', 'violation_records')->count() }}
+                {{ $violationReports }}
             </h1>
 
             <p class="text-blue-600 mt-3">
@@ -86,7 +86,7 @@
             </h3>
 
             <h1 class="text-4xl font-bold mt-3">
-                {{ \App\Models\Customer::count() }}
+                {{ $totalHosts }}
             </h1>
 
             <p class="text-blue-600 mt-3">
@@ -137,7 +137,7 @@
             </h3>
 
             <h1 class="text-4xl font-bold mt-3">
-                {{ \App\Models\SkippedImportId::query()->distinct('host_id')->count('host_id') }}
+                {{ $skippedHostIds }}
             </h1>
 
             <p class="text-blue-600 mt-3">

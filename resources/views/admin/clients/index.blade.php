@@ -203,4 +203,7 @@
 
     </table>
     </div>
+    <div class="p-4">
+        {{ $clients->links() }}
+    </div>
 @endsection

@@ -113,51 +113,28 @@
                             @foreach($hosts as $host)
                                 <tr>
                                     <td><input type="checkbox" class="host-select-checkbox table-checkbox" value="{{ $host->id }}"></td>
-                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $hosts->firstItem() + $loop->index }}</td>
                                     <td class="host-id-cell">
                                         <strong>{{ $host->customer_id ?? '-' }}</strong>
                                         @if($host->customer_id)
                                             <button type="button" class="copy-host-id" data-copy-id="{{ $host->customer_id }}" title="Copy Host ID">Copy</button>
-                                        <td class="action-cell">
-                                            <div class="actions">
-                                                @if($host->approval_status === 'rejected')
-                                                    <form action="{{ route('manager.hosts.destroy', $host) }}" method="POST">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-reject" onclick="return confirm('Delete this rejected host?')">Delete</button>
-                                                    </form>
-                                                @elseif($host->approval_status === 'pending')
-                                                    @if($host->approval_status !== 'approved')
-                                                        <form action="{{ route('manager.hosts.approve', $host) }}" method="POST">
-                                                            @csrf
-                                                            @method('PATCH')
-                                                            <button type="submit" class="btn btn-approve">Approve</button>
-                                                        </form>
-                                                    @endif
-                                                    <form action="{{ route('manager.hosts.reject', $host) }}" method="POST" class="reject-form">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <input type="text" name="rejection_reason" placeholder="Enter reason" required maxlength="1000" aria-label="Rejection reason for {{ $host->customer_id }}">
-                                                        <button type="submit" class="btn btn-reject">Reject</button>
-                                                    </form>
-                                                @endif
+                                        @endif
                                     </td>
-                                        </td>
-                                    <td>{{ $host->rejection_reason ?: '-' }}</td>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <div class="empty">
-                        <div class="empty-icon">📭</div>
-                        <h3>No hosts found</h3>
-                        <p>Use the filters above to search by host, client, name, or status.</p>
-                    </div>
-                @endif
-            </div>
-        </div>
+                                    <td><strong>{{ $host->name ?? $host->customer_id ?? '-' }}</strong></td>
+                                    <td>{{ $host->client->name ?? 'N/A' }}</td>
+                                    <td>{{ $host->country ?? '-' }}</td>
+                                    <td>{{ $host->created_at ? $host->created_at->format('d M Y H:i') : '-' }}</td>
                                     <td>
+                                        @if($host->approval_status === 'approved')
+                                            <span class="badge badge-approved">Approved</span>
+                                        @elseif($host->approval_status === 'rejected')
+                                            <span class="badge badge-rejected">Rejected</span>
+                                        @else
+                                            <span class="badge badge-pending">Pending</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $host->rejection_reason ?: '-' }}</td>
+                                    <td class="action-cell">
                                         <div class="actions">
                                             @if($host->approval_status === 'rejected')
                                                 <form action="{{ route('manager.hosts.destroy', $host) }}" method="POST">
@@ -165,12 +142,38 @@
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-reject" onclick="return confirm('Delete this rejected host?')">Delete</button>
                                                 </form>
-                                            @elseif($host->approval_status !== 'approved')
+                                            @elseif($host->approval_status === 'pending')
                                                 <form action="{{ route('manager.hosts.approve', $host) }}" method="POST">
                                                     @csrf
                                                     @method('PATCH')
                                                     <button type="submit" class="btn btn-approve">Approve</button>
                                                 </form>
+                                                <form action="{{ route('manager.hosts.reject', $host) }}" method="POST" class="reject-form">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <input type="text" name="rejection_reason" placeholder="Enter reason" required maxlength="1000" aria-label="Rejection reason for {{ $host->customer_id }}">
+                                                    <button type="submit" class="btn btn-reject">Reject</button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <div style="padding: 16px;">
+                    {{ $hosts->links() }}
+                </div>
+            @else
+                <div class="empty">
+                    <div class="empty-icon">📭</div>
+                    <h3>No hosts found</h3>
+                    <p>Use the filters above to search by host, client, name, or status.</p>
+                </div>
+            @endif
+        </div>
+    </div>
 @endsection
 
 @push('scripts')

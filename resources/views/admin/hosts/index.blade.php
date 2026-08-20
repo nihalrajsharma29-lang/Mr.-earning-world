@@ -134,7 +134,7 @@
                                     <td>
                                         <input type="checkbox" class="host-select-checkbox table-checkbox" value="{{ $host->id }}">
                                     </td>
-                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $hosts->firstItem() + $loop->index }}</td>
                                     <td class="host-id-cell">
                                         <strong>{{ $host->customer_id ?? '-' }}</strong>
                                         @if($host->customer_id)
@@ -171,6 +171,9 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+                <div style="padding: 16px;">
+                    {{ $hosts->links() }}
                 </div>
             @else
                 <div class="empty">
