@@ -126,7 +126,7 @@
                                                         @method('DELETE')
                                                         <button type="submit" class="btn btn-reject" onclick="return confirm('Delete this rejected host?')">Delete</button>
                                                     </form>
-                                                @else
+                                                @elseif($host->approval_status === 'pending')
                                                     @if($host->approval_status !== 'approved')
                                                         <form action="{{ route('manager.hosts.approve', $host) }}" method="POST">
                                                             @csrf

@@ -156,7 +156,7 @@
                                     </td>
                                     <td>{{ $host->rejection_reason ?: '-' }}</td>
                                     <td class="action-cell">
-                                        @if($host->approval_status !== 'rejected')
+                                        @if($host->approval_status === 'pending')
                                             <form action="{{ route('admin.hosts.reject', $host) }}" method="POST" class="reject-form">
                                                 @csrf
                                                 @method('PATCH')
