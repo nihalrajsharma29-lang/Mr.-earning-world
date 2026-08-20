@@ -7,6 +7,7 @@ use App\Models\DailyReport;
 use App\Models\Client;
 use App\Models\Customer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class DashboardController extends BaseController
 {
@@ -19,13 +20,22 @@ class DashboardController extends BaseController
         $violationReports = DailyReport::whereNotNull('violation_records')
             ->where('violation_records', '<>', '')
             ->count();
+        $dailyReportDates = DailyReport::query()
+            ->where('report_type', 'daily_report')
+            ->whereNotNull('dt')
+            ->pluck('dt')
+            ->map(fn ($date) => Carbon::parse($date)->toDateString())
+            ->unique()
+            ->sortDesc()
+            ->values();
 
         return view('admin.dashboard', compact(
             'totalClients',
             'pendingHosts',
             'totalReports',
             'totalSalary',
-            'violationReports'
+            'violationReports',
+            'dailyReportDates'
         ));
     }
 

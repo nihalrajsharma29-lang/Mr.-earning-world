@@ -64,6 +64,49 @@
         </p>
     </a>
 
+    {{-- Delete Daily Reports by Date --}}
+    <div class="bg-red-50 p-6 rounded-xl shadow border border-red-100">
+        <h3 class="text-red-700 text-lg font-semibold">
+            Delete Daily Report Data
+        </h3>
+
+        <p class="text-red-600 text-sm mt-2">
+            Delete all daily reports for a selected date.
+        </p>
+
+        <form
+            action="{{ route('admin.reports.delete.date', ['date' => 'selected']) }}"
+            method="POST"
+            class="mt-4"
+            onsubmit="return confirm('Are you sure you want to permanently delete all daily reports for this date?');"
+        >
+            @csrf
+            @method('DELETE')
+            <input type="hidden" name="report_type" value="daily_report">
+            <label for="dashboard-delete-date" class="sr-only">Report date</label>
+            <select
+                id="dashboard-delete-date"
+                name="date"
+                required
+                class="w-full rounded-lg border border-red-200 bg-white px-3 py-2"
+            >
+                <option value="">Select report date</option>
+                @foreach($dailyReportDates as $reportDate)
+                    <option value="{{ $reportDate }}">
+                        {{ \Illuminate\Support\Carbon::parse($reportDate)->format('d-M-Y') }}
+                    </option>
+                @endforeach
+            </select>
+            <button
+                type="submit"
+                class="mt-3 w-full rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700"
+                {{ $dailyReportDates->isEmpty() ? 'disabled' : '' }}
+            >
+                Delete Daily Reports
+            </button>
+        </form>
+    </div>
+
     {{-- Host Management --}}
     <a
         href="{{ route('admin.hosts.index') }}"
