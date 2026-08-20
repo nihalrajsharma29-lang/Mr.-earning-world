@@ -52,7 +52,6 @@ class DailyReportController extends BaseController
         $allowedColumnKeys = collect($availableColumns)->pluck('key')->all();
         $defaultSortColumn = match ($reportType) {
             'payment_report' => 'weekly_final_coins_hosts',
-            'daily_report' => 'total_coins',
             default => null,
         };
         $defaultSortColumn = in_array($defaultSortColumn, $allowedColumnKeys, true)
@@ -200,7 +199,12 @@ class DailyReportController extends BaseController
             : $defaultSortColumn;
         $sortDirection = $request->input('sort_direction', 'desc') === 'asc' ? 'asc' : 'desc';
 
-        if ($sortColumn) {
+        if ($reportType === 'daily_report' && ! $request->filled('sort_column')) {
+            $reports = $reports->sortBy([
+                ['dt', 'desc'],
+                ['total_coins', 'desc'],
+            ])->values();
+        } elseif ($sortColumn) {
             $reports = $reports->sortBy(function ($report) use ($sortColumn) {
                 return $sortColumn === 'client_name_uid'
                     ? trim(($report->client?->name ?? '-') . ' / ' . ($report->client_id ?? '-'))
