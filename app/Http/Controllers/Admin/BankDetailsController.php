@@ -68,13 +68,7 @@ class BankDetailsController extends BaseController
             $clientReports = $paymentReports->get($client->id, collect());
             $client->setAttribute('payment_weekly_date', $weeklyDate);
             $client->setAttribute('total_agent_salary', round($clientReports->sum(function (DailyReport $report): float {
-                $agentFee = (float) ($report->getRawOriginal('agent_fee_usd') ?? 0);
-                if ($agentFee <= 0) {
-                    $agentFee = (float) ($report->weekly_reward_base_usd_hosts ?? 0)
-                        * ((float) ($report->client?->commission_percentage ?? 0) / 100);
-                }
-
-                return $agentFee + (float) ($report->agent_one_time_bonus_usd ?? 0);
+                return (float) ($report->agent_fee_usd ?? 0) + (float) ($report->agent_one_time_bonus_usd ?? 0);
             }), 2));
         });
 
@@ -91,6 +85,14 @@ class BankDetailsController extends BaseController
 
         return redirect()->route('admin.bank-details')
             ->with('success', 'Transfer status updated for '.$client->name.'.');
+    }
+
+    public function reset()
+    {
+        Client::query()->update(['transfer_status' => 'pending']);
+
+        return redirect()->route('admin.bank-details')
+            ->with('success', 'All transfer statuses have been reset to pending.');
     }
 
     public function destroy(Client $client)

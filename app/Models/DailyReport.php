@@ -216,20 +216,21 @@ class DailyReport extends Model
 
     public function getAgentFeeUsdAttribute($value): mixed
     {
-        $value = $value ?? 0;
-
-        if ((float) $value > 0) {
-            return $value;
-        }
-
         $commissionRate = (float) ($this->client?->commission_percentage ?? 0);
-        $weeklyRewardBase = (float) ($this->weekly_reward_base_usd_hosts ?? 0);
 
-        if ($commissionRate <= 0 || $weeklyRewardBase <= 0) {
-            return $value;
+        if ($commissionRate > 0) {
+            $weeklyRewardBase = (float) ($this->weekly_reward_base_usd_hosts ?? 0);
+            if ($weeklyRewardBase <= 0) {
+                $weeklyRewardBase = (float) ($this->weekly_reward_base_usd_before_strike_hosts ?? 0);
+            }
+            if ($weeklyRewardBase <= 0) {
+                $weeklyRewardBase = (float) ($this->hosts_final_reward_usd ?? 0);
+            }
+
+            return round($weeklyRewardBase * ($commissionRate / 100), 2);
         }
 
-        return round($weeklyRewardBase * ($commissionRate / 100), 2);
+        return (float) ($value ?? 0);
     }
 
 

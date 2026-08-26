@@ -10,9 +10,17 @@
                 <h1 class="text-2xl font-bold text-gray-900">Bank Details</h1>
                 <p class="text-sm text-gray-500">Client bank information submitted from the client portal.</p>
             </div>
-            <a href="{{ route('admin.bank-details.export') }}" class="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
-                Export to Excel
-            </a>
+            <div class="flex items-center gap-2">
+                <form action="{{ route('admin.bank-details.reset') }}" method="POST" onsubmit="return confirm('Are you sure you want to reset all transfer statuses to pending?');">
+                    @csrf
+                    <button type="submit" class="inline-flex items-center rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
+                        Reset
+                    </button>
+                </form>
+                <a href="{{ route('admin.bank-details.export') }}" class="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
+                    Export to Excel
+                </a>
+            </div>
         </div>
 
         @if(session('success'))

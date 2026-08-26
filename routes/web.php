@@ -301,6 +301,11 @@ Route::middleware('auth')->group(function () {
         [\App\Http\Controllers\Admin\BankDetailsController::class, 'updateTransferStatus']
     )->name('admin.bank-details.transfer-status');
 
+    Route::post(
+        '/admin/bank-details/reset',
+        [\App\Http\Controllers\Admin\BankDetailsController::class, 'reset']
+    )->name('admin.bank-details.reset');
+
     Route::get(
         '/admin/bank-details/export',
         [\App\Http\Controllers\Admin\BankDetailsController::class, 'export']
