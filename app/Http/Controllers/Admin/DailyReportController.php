@@ -175,9 +175,18 @@ class DailyReportController extends BaseController
             ];
         }
 
-        $totalCoins = $reportType === 'daily_report'
-            ? $reports->sum(fn ($report) => (float) ($report->total_coins ?? 0))
-            : 0;
+        $totalCoins = 0;
+        if ($reportType === 'daily_report' && $reports->isNotEmpty()) {
+            $totalCoinsDate = $request->filled('date')
+                ? Carbon::parse($request->date)->toDateString()
+                : $reports
+                    ->map(fn ($report) => Carbon::parse($report->dt)->toDateString())
+                    ->max();
+
+            $totalCoins = $reports
+                ->filter(fn ($report) => Carbon::parse($report->dt)->toDateString() === $totalCoinsDate)
+                ->sum(fn ($report) => (float) ($report->total_coins ?? 0));
+        }
 
         $sortColumn = in_array($request->input('sort_column', $defaultSortColumn), $allowedColumnKeys, true)
             ? $request->input('sort_column', $defaultSortColumn)
