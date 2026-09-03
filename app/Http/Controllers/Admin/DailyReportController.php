@@ -175,6 +175,10 @@ class DailyReportController extends BaseController
             ];
         }
 
+        $totalCoins = $reportType === 'daily_report'
+            ? $reports->sum(fn ($report) => (float) ($report->total_coins ?? 0))
+            : 0;
+
         $sortColumn = in_array($request->input('sort_column', $defaultSortColumn), $allowedColumnKeys, true)
             ? $request->input('sort_column', $defaultSortColumn)
             : $defaultSortColumn;
@@ -216,7 +220,7 @@ class DailyReportController extends BaseController
 
         return view(
             $isManager ? 'manager.reports.index' : 'admin.clients.daily-reports.index',
-            compact('reports', 'reportType', 'weeklyDate', 'totalHostCount', 'workingHostCount', 'paymentReportColumns', 'paymentSummary', 'violationReportColumns', 'dailyReportColumns', 'defaultSortColumn')
+            compact('reports', 'reportType', 'weeklyDate', 'totalHostCount', 'workingHostCount', 'totalCoins', 'paymentReportColumns', 'paymentSummary', 'violationReportColumns', 'dailyReportColumns', 'defaultSortColumn')
         );
     }
 

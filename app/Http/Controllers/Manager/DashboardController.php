@@ -17,6 +17,13 @@ class DashboardController extends BaseController
         $totalHosts = Customer::count();
         $pendingHosts = Customer::where('approval_status', 'pending')->count();
         $skippedHostIds = SkippedImportId::query()->distinct('host_id')->count('host_id');
+        $dailyReportDates = DailyReport::query()
+            ->where('report_type', 'daily_report')
+            ->whereNotNull('dt')
+            ->select('dt')
+            ->distinct()
+            ->orderByDesc('dt')
+            ->pluck('dt');
 
         return view('manager.dashboard', compact(
             'dailyReports',
@@ -24,7 +31,8 @@ class DashboardController extends BaseController
             'violationReports',
             'totalHosts',
             'pendingHosts',
-            'skippedHostIds'
+            'skippedHostIds',
+            'dailyReportDates'
         ));
     }
 }

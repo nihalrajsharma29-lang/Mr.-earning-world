@@ -101,7 +101,7 @@
                 @if($isPaymentReport)
                     ${{ number_format($paymentSummary['agent_one_time_bonus_total'] ?? 0, 2) }}
                 @else
-                    {{ number_format($reports->sum('total_coins')) }}
+                    {{ number_format($totalCoins) }}
                 @endif
             </div>
         </div>
