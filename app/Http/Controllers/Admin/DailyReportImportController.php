@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Admin\BaseController;
 use App\Imports\DailyReportImport;
 use App\Models\AdminAuditLog;
+use App\Models\ReportImportName;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Excel as ExcelReader;
 use Maatwebsite\Excel\Facades\Excel;
@@ -196,7 +197,7 @@ class DailyReportImportController extends BaseController
 
     private function requiredFileNameToken(string $reportType): ?string
     {
-        $names = config('report_import_names', []);
+        $names = ReportImportName::values();
 
         return $names[$reportType] ?? null;
     }

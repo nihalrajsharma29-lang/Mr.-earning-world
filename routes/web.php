@@ -285,6 +285,11 @@ Route::middleware('auth')->group(function () {
         [AdminDailyReportController::class, 'destroySelected']
     )->name('admin.reports.delete.selected');
 
+    Route::delete(
+        '/admin/reports/payment/clear-all',
+        [AdminDailyReportController::class, 'clearAllPaymentReports']
+    )->name('admin.reports.payment.clear-all');
+
     // ADMIN - AUDIT LOGS
     Route::get(
         '/admin/audit',

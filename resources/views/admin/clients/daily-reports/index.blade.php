@@ -29,6 +29,7 @@
     .btn { border: none; border-radius: 12px; cursor: pointer; font-weight: 700; }
     .btn-primary { background: #2563eb; color: white; padding: 0 20px; height: 44px; }
     .btn-danger { background: #dc2626; color: white; padding: 0 20px; height: 44px; }
+    .btn-success { background: #16a34a; color: white; padding: 0 20px; height: 44px; }
     .btn-secondary { background: #f8fafc; color: #111827; padding: 0 20px; height: 44px; border: 1px solid #e5e7eb; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
     .table-wrapper { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; min-width: 900px; }
@@ -167,7 +168,22 @@
                 <a href="{{ route('admin.reports', ['report_type' => request('report_type', 'daily_report')]) }}" class="btn-secondary">Reset</a>
                 <button type="submit" name="export" value="1" class="btn btn-secondary">⬇️ Export to Excel</button>
                 <button type="button" id="delete-selected-btn" class="btn btn-danger">🗑️ Delete Selected</button>
+                @if($isPaymentReport)
+                    <button type="button" id="clear-all-payment-btn" class="btn btn-success">🗑️ Clear All Reports</button>
+                @endif
             </form>
+
+            @if($isPaymentReport)
+                <form
+                    id="clear-all-payment-form"
+                    action="{{ route('admin.reports.payment.clear-all') }}"
+                    method="POST"
+                    style="display:none;"
+                >
+                    @csrf
+                    @method('DELETE')
+                </form>
+            @endif
 
             <form id="bulk-delete-form" action="{{ route('admin.reports.delete.selected') }}" method="POST" style="display:none;">
                 @csrf
@@ -357,6 +373,8 @@
     const deleteSelectedBtn = document.getElementById('delete-selected-btn');
     const bulkDeleteForm = document.getElementById('bulk-delete-form');
     const bulkDeleteInputs = document.getElementById('bulk-delete-inputs');
+    const clearAllPaymentBtn = document.getElementById('clear-all-payment-btn');
+    const clearAllPaymentForm = document.getElementById('clear-all-payment-form');
 
     selectAll?.addEventListener('change', function () {
         rowCheckboxes.forEach(function (checkbox) {
@@ -404,6 +422,12 @@
         });
 
         bulkDeleteForm.submit();
+    });
+
+    clearAllPaymentBtn?.addEventListener('click', function () {
+        if (confirm('Are you sure you want to permanently delete all payment reports?')) {
+            clearAllPaymentForm?.submit();
+        }
     });
 
 </script>

@@ -318,6 +318,34 @@ class DailyReportController extends BaseController
             ->with('success', "{$deleted} selected report(s) deleted.");
     }
 
+    /**
+     * Delete every payment report.
+     */
+    public function clearAllPaymentReports()
+    {
+        $deleted = DailyReport::query()
+            ->where('report_type', 'payment_report')
+            ->delete();
+
+        AdminAuditLog::create([
+            'admin_id' => auth()->id(),
+            'action' => 'clear_all_payment_reports',
+            'details' => sprintf(
+                '%s deleted all payment reports (%d report(s)).',
+                auth()->user()->name,
+                $deleted
+            ),
+            'ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+
+        $routeName = auth()->user()->role === 'manager' ? 'manager.reports' : 'admin.reports';
+
+        return redirect()
+            ->route($routeName, ['report_type' => 'payment_report'])
+            ->with('success', "{$deleted} payment report(s) deleted.");
+    }
+
     public function updateWeeklyDate(Request $request, DailyReport $report)
     {
         abort_unless($report->report_type === 'payment_report', 404);

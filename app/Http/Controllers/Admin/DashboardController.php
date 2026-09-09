@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\BaseController;
 use App\Models\DailyReport;
 use App\Models\Client;
 use App\Models\Customer;
+use App\Models\ReportImportName;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -47,11 +48,7 @@ class DashboardController extends BaseController
     public function reportImportNames()
     {
         return view('admin.report-import-names', [
-            'names' => config('report_import_names', [
-                'daily_report' => '4280121896',
-                'payment_report' => 'Payment Report',
-                'violation_records' => 'Strike Records',
-            ]),
+            'names' => ReportImportName::values(),
         ]);
     }
 
@@ -75,16 +72,12 @@ class DashboardController extends BaseController
             }
         }
 
-        $path = config_path('report_import_names.php');
-        $content = "<?php\n\nreturn [\n";
-
         foreach ($config as $key => $value) {
-            $content .= "    '{$key}' => " . (is_null($value) ? 'null' : "'" . addslashes($value) . "'") . ",\n";
+            ReportImportName::updateOrCreate(
+                ['report_type' => $key],
+                ['name' => $value]
+            );
         }
-
-        $content .= "];\n";
-
-        file_put_contents($path, $content);
 
         return redirect()->route('admin.report-import-names')->with('success', 'Report file names updated successfully.');
     }
