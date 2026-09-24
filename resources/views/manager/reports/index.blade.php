@@ -29,6 +29,7 @@
     .btn { border: none; border-radius: 12px; cursor: pointer; font-weight: 700; }
     .btn-primary { background: #2563eb; color: white; padding: 0 20px; height: 44px; }
     .btn-danger { background: #dc2626; color: white; padding: 0 20px; height: 44px; }
+    .btn-success { background: #16a34a; color: white; padding: 0 20px; height: 44px; }
     .btn-secondary { background: #f8fafc; color: #111827; padding: 0 20px; height: 44px; border: 1px solid #e5e7eb; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
     .table-wrapper { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; min-width: 900px; }
@@ -161,7 +162,22 @@
                 <button type="submit" class="btn btn-primary">🔎 Search</button>
                 <a href="{{ route('manager.reports', ['report_type' => request('report_type', 'daily_report')]) }}" class="btn-secondary">Reset</a>
                 <button type="button" id="delete-selected-btn" class="btn btn-danger">🗑️ Delete Selected</button>
+                @if($isPaymentReport)
+                    <button type="button" id="clear-all-payment-btn" class="btn btn-success">🗑️ Clear All Reports</button>
+                @endif
             </form>
+
+            @if($isPaymentReport)
+                <form
+                    id="clear-all-payment-form"
+                    action="{{ route('manager.reports.payment.clear-all') }}"
+                    method="POST"
+                    style="display:none;"
+                >
+                    @csrf
+                    @method('DELETE')
+                </form>
+            @endif
 
             <form id="bulk-delete-form" action="{{ route('manager.reports.delete.selected') }}" method="POST" style="display:none;">
                 @csrf
@@ -341,6 +357,8 @@
     const managerDeleteSelectedBtn = document.getElementById('delete-selected-btn');
     const managerBulkDeleteForm = document.getElementById('bulk-delete-form');
     const managerBulkDeleteInputs = document.getElementById('bulk-delete-inputs');
+    const managerClearAllPaymentBtn = document.getElementById('clear-all-payment-btn');
+    const managerClearAllPaymentForm = document.getElementById('clear-all-payment-form');
 
     managerSelectAll?.addEventListener('change', function () {
         managerRowCheckboxes.forEach(function (checkbox) {
@@ -388,6 +406,12 @@
         });
 
         managerBulkDeleteForm.submit();
+    });
+
+    managerClearAllPaymentBtn?.addEventListener('click', function () {
+        if (managerClearAllPaymentForm && confirm('Delete all payment reports?')) {
+            managerClearAllPaymentForm.submit();
+        }
     });
 </script>
 @endpush

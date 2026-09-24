@@ -71,17 +71,17 @@ class CustomerController extends BaseController
                 ->withInput();
         }
 
-        $existingIds = Customer::query()
+        $blockedIds = Customer::query()
             ->whereIn('customer_id', $uniqueIds)
+            ->whereIn('approval_status', ['approved', 'pending'])
             ->pluck('customer_id')
             ->all();
-
-        $existingMap = array_fill_keys($existingIds, true);
+        $blockedMap = array_fill_keys($blockedIds, true);
         $createdCount = 0;
         $skippedCount = 0;
 
         foreach ($uniqueIds as $hostId) {
-            if (isset($existingMap[$hostId])) {
+            if (isset($blockedMap[$hostId])) {
                 $skippedCount++;
                 continue;
             }
@@ -114,7 +114,7 @@ class CustomerController extends BaseController
         }
 
         return redirect()
-            ->route('client.hosts.create')
+            ->route('client.hosts.audit')
             ->with('success', $message);
     }
 }

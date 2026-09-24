@@ -6,6 +6,8 @@ use App\Models\ReportColumn;
 
 class ReportColumnManager
 {
+    private static array $visibleColumns = [];
+
     public static function defaults(string $reportType): array
     {
         return match ($reportType) {
@@ -26,6 +28,10 @@ class ReportColumnManager
 
     public static function visible(string $reportType): array
     {
+        if (array_key_exists($reportType, self::$visibleColumns)) {
+            return self::$visibleColumns[$reportType];
+        }
+
         $savedQuery = ReportColumn::where('report_type', $reportType);
         $saved = (clone $savedQuery)
             ->where('is_visible', true)
@@ -34,7 +40,7 @@ class ReportColumnManager
             ->keyBy('column_key');
 
         if (! $savedQuery->exists()) {
-            return self::defaults($reportType);
+            return self::$visibleColumns[$reportType] = self::defaults($reportType);
         }
 
         $columns = $saved->reject(fn (ReportColumn $column) => $reportType === 'payment_report' && $column->column_key === 'weekly_date')
@@ -46,6 +52,6 @@ class ReportColumnManager
             ->values()
             ->all();
 
-        return $columns;
+        return self::$visibleColumns[$reportType] = $columns;
     }
 }

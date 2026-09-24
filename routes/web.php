@@ -155,6 +155,11 @@ Route::middleware('auth')->group(function () {
         [\App\Http\Controllers\Admin\DailyReportController::class, 'destroySelected']
     )->name('manager.reports.delete.selected');
 
+    Route::delete(
+        '/manager/reports/payment/clear-all',
+        [\App\Http\Controllers\Admin\DailyReportController::class, 'clearAllPaymentReports']
+    )->name('manager.reports.payment.clear-all');
+
     Route::patch(
         '/manager/reports/{report}/weekly-date',
         [\App\Http\Controllers\Admin\DailyReportController::class, 'updateWeeklyDate']

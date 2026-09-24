@@ -35,6 +35,10 @@
         <p>Review the approval status of hosts submitted by your account.</p>
     </div>
 
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
     <div class="card">
         @if($hosts->count() > 0)
             <div class="table-wrapper">

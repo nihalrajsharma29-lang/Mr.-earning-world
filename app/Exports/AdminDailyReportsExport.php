@@ -21,7 +21,7 @@ class AdminDailyReportsExport implements FromQuery, WithHeadings, WithMapping, S
 
     public function __construct(Builder $query, string $reportType = 'daily_report', ?array $columns = null)
     {
-        $this->query = $query->latest('dt');
+        $this->query = $query->with(['customer', 'client'])->latest('dt');
         $this->reportType = $reportType;
         $this->columns = $columns ?? ReportColumnManager::visible($reportType);
     }

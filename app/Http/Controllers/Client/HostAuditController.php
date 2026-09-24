@@ -24,7 +24,9 @@ class HostAuditController extends BaseController
 
         // Sirf isi client ke hosts
         $hosts = Customer::with('client')
-            ->where('client_id', $client->id)
+            ->whereHas('client', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
             ->latest()
             ->paginate(25)
             ->withQueryString();
