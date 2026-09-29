@@ -8,6 +8,9 @@ app = "client-portal"
   # set via `flyctl secrets set` in deployment steps
   PORT = "8080"
 
+[deploy]
+  release_command = "php artisan migrate --force"
+
 [[services]]
   internal_port = 8080
   protocol = "tcp"
