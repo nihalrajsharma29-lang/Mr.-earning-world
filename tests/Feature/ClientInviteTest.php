@@ -26,7 +26,8 @@ class ClientInviteTest extends TestCase
 
     public function test_signed_invite_can_create_a_client_and_login_account(): void
     {
-        $inviteUrl = URL::temporarySignedRoute('client.invite.create', now()->addDay());
+        $signedPath = URL::temporarySignedRoute('client.invite.create', now()->addDay(), [], false);
+        $inviteUrl = 'https://portal.example.test'.$signedPath;
 
         $this->get($inviteUrl)
             ->assertOk()
@@ -63,7 +64,8 @@ class ClientInviteTest extends TestCase
 
     public function test_expired_invite_link_is_rejected(): void
     {
-        $expiredUrl = URL::temporarySignedRoute('client.invite.create', now()->subMinute());
+        $expiredPath = URL::temporarySignedRoute('client.invite.create', now()->subMinute(), [], false);
+        $expiredUrl = 'https://portal.example.test'.$expiredPath;
 
         $this->get($expiredUrl)->assertForbidden();
     }

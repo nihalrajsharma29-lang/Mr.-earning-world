@@ -44,7 +44,7 @@ class ClientController extends BaseController
     public function create()
     {
         return view('admin.clients.create', [
-            'inviteUrl' => URL::temporarySignedRoute('client.invite.create', now()->addDays(7)),
+            'inviteUrl' => url(URL::temporarySignedRoute('client.invite.create', now()->addDays(7), [], false)),
         ]);
     }
 

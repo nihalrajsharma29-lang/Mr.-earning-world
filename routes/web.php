@@ -44,11 +44,11 @@ Route::get('/', function () {
 });
 
 Route::get('/client-invite', [ClientInviteController::class, 'create'])
-    ->middleware(['signed', 'throttle:30,1'])
+    ->middleware(['signed:relative', 'throttle:30,1'])
     ->name('client.invite.create');
 
 Route::post('/client-invite', [ClientInviteController::class, 'store'])
-    ->middleware(['signed', 'throttle:10,1'])
+    ->middleware(['signed:relative', 'throttle:10,1'])
     ->name('client.invite.store');
 
 // Simple sitemap for public pages. Update list as needed.

@@ -23,7 +23,7 @@ class ClientController extends BaseController
             ->paginate(20)
             ->withQueryString();
 
-        $inviteUrl = URL::temporarySignedRoute('client.invite.create', now()->addDays(7));
+        $inviteUrl = url(URL::temporarySignedRoute('client.invite.create', now()->addDays(7), [], false));
 
         return view('manager.clients.index', compact('clients', 'search', 'inviteUrl'));
     }
