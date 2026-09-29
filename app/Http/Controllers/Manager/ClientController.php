@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Manager;
 
 use App\Models\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 
 class ClientController extends BaseController
 {
@@ -22,6 +23,8 @@ class ClientController extends BaseController
             ->paginate(20)
             ->withQueryString();
 
-        return view('manager.clients.index', compact('clients', 'search'));
+        $inviteUrl = URL::temporarySignedRoute('client.invite.create', now()->addDays(7));
+
+        return view('manager.clients.index', compact('clients', 'search', 'inviteUrl'));
     }
 }

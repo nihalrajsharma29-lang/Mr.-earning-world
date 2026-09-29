@@ -6,10 +6,12 @@ use App\Http\Controllers\Admin\BaseController;
 use App\Exports\AdminDailyReportsExport;
 use App\Models\AdminAuditLog;
 use App\Models\DailyReport;
+use App\Models\ReportType;
 use App\Support\ReportColumnManager;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 
 class DailyReportController extends BaseController
 {
@@ -27,7 +29,9 @@ class DailyReportController extends BaseController
     public function index(Request $request)
     {
         $isManager = auth()->user()->role === 'manager';
-        $reportType = $request->input('report_type', 'daily_report');
+        $reportType = $request->input('report_type') ?: ReportType::active()->value('slug');
+        $reportTypeName = ReportType::active()->where('slug', $reportType)->value('name');
+        abort_if($reportTypeName === null, 404);
 
         $query = DailyReport::with(['customer', 'client'])
             ->where('report_type', $reportType);
@@ -215,21 +219,13 @@ class DailyReportController extends BaseController
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
-        $paymentReportColumns = $reportType === 'payment_report'
-            ? ReportColumnManager::visible('payment_report')
-            : [];
-
-        $violationReportColumns = $reportType === 'violation_records'
-            ? ReportColumnManager::visible('violation_records')
-            : [];
-
-        $dailyReportColumns = $reportType === 'daily_report'
-            ? ReportColumnManager::visible('daily_report')
-            : [];
+        $availableColumns = ReportColumnManager::visible($reportType);
+        $paymentReportColumns = $reportType === 'payment_report' ? $availableColumns : [];
+        $violationReportColumns = $reportType === 'violation_records' ? $availableColumns : [];
 
         return view(
             $isManager ? 'manager.reports.index' : 'admin.clients.daily-reports.index',
-            compact('reports', 'reportType', 'weeklyDate', 'totalHostCount', 'workingHostCount', 'totalCoins', 'paymentReportColumns', 'paymentSummary', 'violationReportColumns', 'dailyReportColumns', 'defaultSortColumn')
+            compact('reports', 'reportType', 'reportTypeName', 'weeklyDate', 'totalHostCount', 'workingHostCount', 'totalCoins', 'availableColumns', 'paymentReportColumns', 'violationReportColumns', 'paymentSummary', 'defaultSortColumn')
         );
     }
 
@@ -241,7 +237,7 @@ class DailyReportController extends BaseController
     {
         $request->validate([
             'date' => 'required|date',
-            'report_type' => 'nullable|string|in:daily_report,payment_report,violation_records',
+            'report_type' => ['nullable', 'string', Rule::exists('report_types', 'slug')->where('is_active', true)],
         ]);
 
         $date = $request->date;
@@ -287,7 +283,7 @@ class DailyReportController extends BaseController
         $validated = $request->validate([
             'report_ids' => 'required|array|min:1',
             'report_ids.*' => 'integer|exists:daily_reports,id',
-            'report_type' => 'nullable|string|in:daily_report,payment_report,violation_records',
+            'report_type' => ['nullable', 'string', Rule::exists('report_types', 'slug')->where('is_active', true)],
         ]);
 
         $reportType = $validated['report_type'] ?? 'payment_report';

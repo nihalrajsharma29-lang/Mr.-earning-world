@@ -6,8 +6,17 @@
 @section('content')
     <div class="max-w-7xl mx-auto">
         <div class="flex items-center justify-between mb-6">
-            <div>
+            <div class="flex items-center gap-4">
                 <h1 class="text-3xl font-bold text-gray-900">Client Management</h1>
+                <button
+                    type="button"
+                    id="copy-client-invite"
+                    data-invite-url="{{ $inviteUrl }}"
+                    class="border border-blue-600 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 font-semibold"
+                >
+                    Copy Invite Link
+                </button>
+                <span id="invite-copy-status" class="text-sm text-green-700" role="status" aria-live="polite"></span>
             </div>
             <div class="p-4">
                 {{ $clients->links() }}
@@ -88,3 +97,26 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.getElementById('copy-client-invite')?.addEventListener('click', async function () {
+        const inviteUrl = this.dataset.inviteUrl;
+
+        try {
+            await navigator.clipboard.writeText(inviteUrl);
+        } catch (error) {
+            const temporaryInput = document.createElement('textarea');
+            temporaryInput.value = inviteUrl;
+            temporaryInput.style.position = 'fixed';
+            temporaryInput.style.opacity = '0';
+            document.body.appendChild(temporaryInput);
+            temporaryInput.select();
+            document.execCommand('copy');
+            temporaryInput.remove();
+        }
+
+        document.getElementById('invite-copy-status').textContent = 'Invite link copied. Valid for 7 days.';
+    });
+</script>
+@endpush

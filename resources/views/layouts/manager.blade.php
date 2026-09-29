@@ -71,9 +71,9 @@
                 <a href="{{ route('manager.dashboard') }}" class="{{ request()->routeIs('manager.dashboard') ? 'active' : '' }}">🏠 Dashboard</a>
                 <a href="{{ route('manager.daily.import') }}" class="{{ request()->routeIs('manager.daily.import*') ? 'active' : '' }}">📥 Import Report</a>
                 <a href="{{ route('manager.skipped-import-ids.index') }}" class="{{ request()->routeIs('manager.skipped-import-ids.*') ? 'active' : '' }}">🔎 Skipped Host IDs</a>
-                <a href="{{ route('manager.reports', ['report_type' => 'daily_report']) }}" class="{{ request()->routeIs('manager.reports') && request('report_type', 'daily_report') === 'daily_report' ? 'active' : '' }}">📅 Daily Report</a>
-                <a href="{{ route('manager.reports', ['report_type' => 'payment_report']) }}" class="{{ request()->routeIs('manager.reports') && request('report_type') === 'payment_report' ? 'active' : '' }}">💰 Payment Report</a>
-                <a href="{{ route('manager.reports', ['report_type' => 'violation_records']) }}" class="{{ request()->routeIs('manager.reports') && request('report_type') === 'violation_records' ? 'active' : '' }}">⚠️ Violation Records</a>
+                @foreach(\App\Models\ReportType::active()->get() as $reportType)
+                    <a href="{{ route('manager.reports', ['report_type' => $reportType->slug]) }}" class="{{ request()->routeIs('manager.reports') && request('report_type', 'daily_report') === $reportType->slug ? 'active' : '' }}">📄 {{ $reportType->name }}</a>
+                @endforeach
                 <a href="{{ route('manager.clients.index') }}" class="{{ request()->routeIs('manager.clients.*') ? 'active' : '' }}">👥 Client</a>
                 <a href="{{ route('manager.hosts.index') }}" class="{{ request()->routeIs('manager.hosts.*') ? 'active' : '' }}">✅ Host</a>
                 <div class="menu-title">Account</div>

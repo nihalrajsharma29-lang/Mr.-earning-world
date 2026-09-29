@@ -26,10 +26,11 @@
             @csrf
             @method('PUT')
 
-            @foreach(['daily_report' => 'Daily Report', 'payment_report' => 'Payment Report', 'violation_records' => 'Violation Report'] as $type => $title)
+            @foreach($reportTypes as $reportType)
+                @php($type = $reportType->slug)
                 <section class="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                     <div class="mb-4 flex items-center justify-between gap-4">
-                        <h2 class="text-lg font-bold text-gray-900">{{ $title }}</h2>
+                        <h2 class="text-lg font-bold text-gray-900">{{ $reportType->name }}</h2>
                         <div class="flex items-center gap-4">
                             <button type="button" class="text-sm font-semibold text-blue-600 hover:text-blue-800" onclick="toggleReportColumns('{{ $type }}')">Toggle all</button>
                             <button type="button" class="text-sm font-semibold text-blue-600 hover:text-blue-800" onclick="toggleCreateColumn('{{ $type }}')">+ Create</button>

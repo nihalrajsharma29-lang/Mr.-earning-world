@@ -39,7 +39,10 @@
 @section('content')
     <div class="panel">
         <div class="panel-body">
-            <div class="panel-title">Host Management</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 8px;">
+                <div class="panel-title" style="margin-bottom: 0;">Host Management</div>
+                <a href="{{ route('manager.hosts.export', request()->query()) }}" class="btn btn-approve" style="background: #2563eb; text-decoration: none;">📥 Export to Excel</a>
+            </div>
             <p class="panel-text">Review hosts and approve or reject them from the manager portal.</p>
 
             @if(session('success'))

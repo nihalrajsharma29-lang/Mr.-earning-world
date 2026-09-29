@@ -73,9 +73,9 @@
                 <a href="{{ route('clients.index') }}" class="{{ request()->routeIs('clients.*') ? 'active' : '' }}">👥 Clients</a>
                 <a href="{{ route('admin.daily.import') }}" class="{{ request()->routeIs('admin.daily.import*') ? 'active' : '' }}">� Import Reports</a>
                 <a href="{{ route('admin.skipped-import-ids.index') }}" class="{{ request()->routeIs('admin.skipped-import-ids.*') ? 'active' : '' }}">🔎 Skipped Host IDs</a>
-                <a href="{{ route('admin.reports', ['report_type' => 'daily_report']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type', 'daily_report') === 'daily_report' ? 'active' : '' }}">📅 Daily Report</a>
-                <a href="{{ route('admin.reports', ['report_type' => 'payment_report']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type') === 'payment_report' ? 'active' : '' }}">💰 Payment Report</a>
-                <a href="{{ route('admin.reports', ['report_type' => 'violation_records']) }}" class="{{ request()->routeIs('admin.reports') && request('report_type') === 'violation_records' ? 'active' : '' }}">⚠️ Violation Records</a>
+                @foreach(\App\Models\ReportType::active()->get() as $reportType)
+                    <a href="{{ route('admin.reports', ['report_type' => $reportType->slug]) }}" class="{{ request()->routeIs('admin.reports') && request('report_type', 'daily_report') === $reportType->slug ? 'active' : '' }}">📄 {{ $reportType->name }}</a>
+                @endforeach
                 <a href="{{ route('admin.report-columns.index') }}" class="{{ request()->routeIs('admin.report-columns.*') ? 'active' : '' }}">⚙️ Report Columns</a>
                 <a href="{{ route('admin.bank-details') }}" class="{{ request()->routeIs('admin.bank-details') ? 'active' : '' }}">💳 Bank Card</a>
                 <a href="{{ route('admin.audit') }}" class="{{ request()->routeIs('admin.audit') ? 'active' : '' }}">📝 Audit Log</a>
@@ -85,6 +85,8 @@
                     @csrf
                     <button type="submit" class="logout-btn">🚪 Logout</button>
                 </form>
+                <div class="menu-title">Management</div>
+                <a href="{{ route('admin.report-types.index') }}" class="{{ request()->routeIs('admin.report-types.*') ? 'active' : '' }}">➕ Report Pages</a>
             </div>
         </aside>
         <div class="sidebar-overlay" id="sidebarOverlay"></div>

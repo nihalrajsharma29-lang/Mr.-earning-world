@@ -268,23 +268,13 @@
                     <div class="action-description">Submit a new host for approval.</div>
                 </a>
 
-                <a href="{{ route('client.daily.reports') }}" class="action">
-                    <div class="action-icon">📅</div>
-                    <div class="action-title">Daily Reports</div>
-                    <div class="action-description">Browse host performance reports.</div>
-                </a>
-
-                <a href="{{ route('client.daily.reports', ['report_type' => 'payment_report']) }}" class="action">
-                    <div class="action-icon">💰</div>
-                    <div class="action-title">Payment Report</div>
-                    <div class="action-description">Open host payment report data.</div>
-                </a>
-
-                <a href="{{ route('client.daily.reports', ['report_type' => 'violation_records']) }}" class="action">
-                    <div class="action-icon">⚠️</div>
-                    <div class="action-title">Violation Records</div>
-                    <div class="action-description">Review violation-related reports.</div>
-                </a>
+                @foreach($reportTypes as $reportType)
+                    <a href="{{ route('client.daily.reports', ['report_type' => $reportType->slug]) }}" class="action">
+                        <div class="action-icon">📄</div>
+                        <div class="action-title">{{ $reportType->name }}</div>
+                        <div class="action-description">{{ $reportCounts[$reportType->slug] ?? 0 }} reports available.</div>
+                    </a>
+                @endforeach
             </div>
         </div>
     </div>

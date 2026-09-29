@@ -7,7 +7,7 @@
 </h1>
 
 <div class="mb-4 p-4 rounded border border-yellow-300 bg-yellow-50 text-yellow-900">
-    <strong>Note:</strong> Clients cannot self-register. Admins must create client accounts here and optionally send them a password reset link.
+    <strong>Note:</strong> Create a client here, or copy an invitation link for a client to complete their own account form.
 </div>
 
 @if ($errors->any())
@@ -142,6 +142,39 @@
         Save Client
     </button>
 
+    <button
+        type="button"
+        id="copy-client-invite"
+        data-invite-url="{{ $inviteUrl }}"
+        class="ml-2 border border-blue-600 text-blue-700 px-6 py-3 rounded hover:bg-blue-50"
+    >
+        Copy Invite Link
+    </button>
+    <span id="invite-copy-status" class="ml-2 text-sm text-green-700" role="status" aria-live="polite"></span>
+
 </form>
+
+@push('scripts')
+<script>
+    document.getElementById('copy-client-invite')?.addEventListener('click', async function () {
+        const inviteUrl = this.dataset.inviteUrl;
+
+        try {
+            await navigator.clipboard.writeText(inviteUrl);
+        } catch (error) {
+            const temporaryInput = document.createElement('textarea');
+            temporaryInput.value = inviteUrl;
+            temporaryInput.style.position = 'fixed';
+            temporaryInput.style.opacity = '0';
+            document.body.appendChild(temporaryInput);
+            temporaryInput.select();
+            document.execCommand('copy');
+            temporaryInput.remove();
+        }
+
+        document.getElementById('invite-copy-status').textContent = 'Invite link copied. Valid for 7 days.';
+    });
+</script>
+@endpush
 
 @endsection

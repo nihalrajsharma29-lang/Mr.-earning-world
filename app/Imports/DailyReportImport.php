@@ -834,11 +834,9 @@ class DailyReportImport implements
     {
         $reportType = strtolower(str_replace(' ', '_', trim($reportType)));
 
-        return match ($reportType) {
-            'payment_report',
-            'violation_records' => $reportType,
-            default => 'daily_report',
-        };
+        return preg_match('/^[a-z0-9_]+$/', $reportType) === 1
+            ? $reportType
+            : 'daily_report';
     }
 
 

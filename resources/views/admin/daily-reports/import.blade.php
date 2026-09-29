@@ -52,9 +52,9 @@
                 <label for="report_type">Report Type</label>
                 <select name="report_type" id="report_type" required>
                     <option value="" {{ old('report_type') ? '' : 'selected' }} disabled>Select Report Type</option>
-                    <option value="daily_report" {{ old('report_type') === 'daily_report' ? 'selected' : '' }}>Daily Report</option>
-                    <option value="payment_report" {{ old('report_type') === 'payment_report' ? 'selected' : '' }}>Payment Report</option>
-                    <option value="violation_records" {{ old('report_type') === 'violation_records' ? 'selected' : '' }}>Violation Records</option>
+                    @foreach(\App\Models\ReportType::active()->orderBy('name')->get() as $reportType)
+                        <option value="{{ $reportType->slug }}" {{ old('report_type') === $reportType->slug ? 'selected' : '' }}>{{ $reportType->name }}</option>
+                    @endforeach
                 </select>
             </div>
 

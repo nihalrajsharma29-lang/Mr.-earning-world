@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ClientInviteController;
 use App\Http\Controllers\CustomerController;
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -41,6 +42,14 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+Route::get('/client-invite', [ClientInviteController::class, 'create'])
+    ->middleware(['signed', 'throttle:30,1'])
+    ->name('client.invite.create');
+
+Route::post('/client-invite', [ClientInviteController::class, 'store'])
+    ->middleware(['signed', 'throttle:10,1'])
+    ->name('client.invite.store');
 
 // Simple sitemap for public pages. Update list as needed.
 Route::get('/sitemap.xml', function () {
@@ -175,6 +184,11 @@ Route::middleware('auth')->group(function () {
         [\App\Http\Controllers\Admin\HostApprovalController::class, 'index']
     )->name('manager.hosts.index');
 
+    Route::get(
+        '/manager/hosts/export',
+        [\App\Http\Controllers\Admin\HostApprovalController::class, 'export']
+    )->name('manager.hosts.export');
+
     Route::patch(
         '/manager/hosts/selected/reassign',
         [\App\Http\Controllers\Admin\HostApprovalController::class, 'reassignSelected']
@@ -262,6 +276,36 @@ Route::middleware('auth')->group(function () {
         '/admin/report-columns',
         [\App\Http\Controllers\Admin\ReportColumnController::class, 'index']
     )->name('admin.report-columns.index');
+
+    Route::get(
+        '/admin/report-types',
+        [\App\Http\Controllers\Admin\ReportTypeController::class, 'index']
+    )->name('admin.report-types.index');
+
+    Route::post(
+        '/admin/report-types',
+        [\App\Http\Controllers\Admin\ReportTypeController::class, 'store']
+    )->name('admin.report-types.store');
+
+    Route::put(
+        '/admin/report-types/{reportType}',
+        [\App\Http\Controllers\Admin\ReportTypeController::class, 'update']
+    )->name('admin.report-types.update');
+
+    Route::delete(
+        '/admin/report-types/{reportType}',
+        [\App\Http\Controllers\Admin\ReportTypeController::class, 'destroy']
+    )->name('admin.report-types.destroy');
+
+    Route::patch(
+        '/admin/report-types/{reportType}/restore',
+        [\App\Http\Controllers\Admin\ReportTypeController::class, 'restore']
+    )->name('admin.report-types.restore');
+
+    Route::delete(
+        '/admin/report-types/{reportType}/permanent',
+        [\App\Http\Controllers\Admin\ReportTypeController::class, 'forceDestroy']
+    )->name('admin.report-types.force-destroy');
 
     Route::put(
         '/admin/report-columns',
@@ -351,6 +395,11 @@ Route::middleware('auth')->group(function () {
         '/admin/hosts',
         [HostApprovalController::class, 'index']
     )->name('admin.hosts.index');
+
+    Route::get(
+        '/admin/hosts/export',
+        [HostApprovalController::class, 'export']
+    )->name('admin.hosts.export');
 
     Route::get(
         '/admin/hosts/create',

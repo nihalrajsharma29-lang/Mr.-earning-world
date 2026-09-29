@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Exports\AdminDailyReportsExport;
 use App\Http\Controllers\Client\BaseController;
 use App\Models\DailyReport;
+use App\Models\ReportType;
 use App\Support\ReportColumnManager;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -35,7 +36,11 @@ class DailyReportController extends BaseController
         |--------------------------------------------------------------------------
         */
 
-        $reportType = $request->input('report_type', 'daily_report');
+        $reportType = $request->input('report_type')
+            ?: ReportType::active()->where('slug', 'daily_report')->value('slug')
+            ?: ReportType::active()->value('slug');
+        $reportTypeName = ReportType::active()->where('slug', $reportType)->value('name');
+        abort_if($reportTypeName === null, 404);
 
         $query = DailyReport::with(['customer', 'client'])
             ->where('client_id', $client->id)
@@ -228,21 +233,16 @@ class DailyReportController extends BaseController
         |--------------------------------------------------------------------------
         */
 
-        $paymentReportColumns = $reportType === 'payment_report'
-            ? ReportColumnManager::visible('payment_report')
-            : [];
-
-        $violationReportColumns = $reportType === 'violation_records'
-            ? ReportColumnManager::visible('violation_records')
-            : [];
-
-        $dailyReportColumns = $reportType === 'daily_report'
-            ? ReportColumnManager::visible('daily_report')
+        $availableColumns = ReportColumnManager::visible($reportType);
+        $paymentReportColumns = $reportType === 'payment_report' ? $availableColumns : [];
+        $violationReportColumns = $reportType === 'violation_records' ? $availableColumns : [];
+        $dailyReportColumns = ! in_array($reportType, ['payment_report', 'violation_records'], true)
+            ? $availableColumns
             : [];
 
         return view(
             'client.daily-reports.index',
-            compact('reports', 'client', 'reportType', 'weeklyDate', 'totalHostCount', 'workingHostCount', 'paymentReportColumns', 'paymentSummary', 'violationReportColumns', 'dailyReportColumns', 'defaultSortColumn')
+            compact('reports', 'client', 'reportType', 'reportTypeName', 'weeklyDate', 'totalHostCount', 'workingHostCount', 'availableColumns', 'paymentReportColumns', 'paymentSummary', 'violationReportColumns', 'dailyReportColumns', 'defaultSortColumn')
         );
     }
 }

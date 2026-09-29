@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\ReportColumn;
+use App\Models\ReportType;
 
 class ReportColumnManager
 {
@@ -24,6 +25,14 @@ class ReportColumnManager
             'payment_report' => self::defaults('payment_report'),
             'violation_records' => self::defaults('violation_records'),
         ];
+    }
+
+    public static function configured(): array
+    {
+        return ReportType::active()
+            ->pluck('slug')
+            ->mapWithKeys(fn (string $reportType) => [$reportType => self::defaults($reportType)])
+            ->all();
     }
 
     public static function visible(string $reportType): array

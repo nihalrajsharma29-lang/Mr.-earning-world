@@ -6,8 +6,8 @@
     $isViolationReport = $activeReportType === 'violation_records';
 @endphp
 
-@section('title', $isPaymentReport ? 'Admin - Payment Report' : ($isViolationReport ? 'Admin - Violation Records' : 'Admin - Daily Reports'))
-@section('page-heading', $isPaymentReport ? 'Payment Report' : ($isViolationReport ? 'Violation Records' : 'Daily Reports'))
+@section('title', 'Admin - ' . $reportTypeName)
+@section('page-heading', $reportTypeName)
 
 @push('styles')
 <style>
@@ -71,12 +71,12 @@
 
     <div class="panel">
         <div class="panel-body">
-            <div class="panel-title">{{ $isPaymentReport ? 'Payment Reports Overview' : ($isViolationReport ? 'Violations Records Overview' : 'Daily Reports Overview') }}</div>
+            <div class="panel-title">{{ $reportTypeName }} Overview</div>
             <p class="panel-text">Search, filter, and manage all host reports submitted across the system. Use the date delete card to remove all reports for a specific date.</p>
         </div>
     </div>
 
-    @unless($isViolationReport)
+    @if($isPaymentReport || $activeReportType === 'daily_report')
     <div class="summary-grid">
         <div class="summary-card">
             <div class="summary-label">{{ $isPaymentReport ? 'Total Host Final Rewards' : 'Total Host' }}</div>
@@ -123,7 +123,7 @@
         </div>
         @endif
     </div>
-    @endunless
+    @endif
 
     <div class="panel">
         <div class="panel-body">
@@ -145,7 +145,7 @@
                 @endunless
 
                 @php
-                    $activeColumns = $isPaymentReport ? $paymentReportColumns : ($isViolationReport ? $violationReportColumns : $dailyReportColumns);
+                    $activeColumns = $availableColumns;
                 @endphp
                 <div class="filter-group">
                     <label for="sort_column">Sort column</label>
@@ -307,7 +307,7 @@
                                 <tr>
                                     <th><input type="checkbox" id="select-all-reports"></th>
                                     <th>#</th>
-                                    @foreach($dailyReportColumns as $column)
+                                    @foreach($activeColumns as $column)
                                         <th>{{ $column['label'] }}</th>
                                     @endforeach
                                 </tr>
@@ -323,7 +323,7 @@
                                             >
                                         </td>
                                         <td>{{ $loop->iteration }}</td>
-                                        @foreach($dailyReportColumns as $column)
+                                        @foreach($activeColumns as $column)
                                             @php
                                                 $rawValue = $column['key'] === 'client_name_uid'
                                                     ? trim(($report->client?->name ?? '-') . ' / ' . ($report->client_id ?? '-'))

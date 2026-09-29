@@ -26,56 +26,13 @@
             </p>
         </a>
 
-        <a
-            href="{{ route('manager.reports', ['report_type' => 'daily_report']) }}"
-            class="block bg-white p-6 rounded-xl shadow hover:shadow-lg transition"
-        >
-            <h3 class="text-gray-500 text-lg">
-                Daily Report
-            </h3>
-
-            <h1 class="text-4xl font-bold mt-3">
-                {{ $dailyReports }}
-            </h1>
-
-            <p class="text-blue-600 mt-3">
-                View daily report →
-            </p>
-        </a>
-
-        <a
-            href="{{ route('manager.reports', ['report_type' => 'payment_report']) }}"
-            class="block bg-white p-6 rounded-xl shadow hover:shadow-lg transition"
-        >
-            <h3 class="text-gray-500 text-lg">
-                Payment Report
-            </h3>
-
-            <h1 class="text-4xl font-bold mt-3">
-                {{ $paymentReports }}
-            </h1>
-
-            <p class="text-blue-600 mt-3">
-                View payment report →
-            </p>
-        </a>
-
-        <a
-            href="{{ route('manager.reports', ['report_type' => 'violation_records']) }}"
-            class="block bg-white p-6 rounded-xl shadow hover:shadow-lg transition"
-        >
-            <h3 class="text-gray-500 text-lg">
-                Violation Record
-            </h3>
-
-            <h1 class="text-4xl font-bold mt-3">
-                {{ $violationReports }}
-            </h1>
-
-            <p class="text-blue-600 mt-3">
-                View violations →
-            </p>
-        </a>
+        @foreach($reportTypes as $reportType)
+            <a href="{{ route('manager.reports', ['report_type' => $reportType->slug]) }}" class="block bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
+                <h3 class="text-gray-500 text-lg">{{ $reportType->name }}</h3>
+                <h1 class="text-4xl font-bold mt-3">{{ $reportCounts[$reportType->slug] ?? 0 }}</h1>
+                <p class="text-blue-600 mt-3">View report →</p>
+            </a>
+        @endforeach
 
         <div class="bg-red-50 p-6 rounded-xl shadow border border-red-100">
             <h3 class="text-red-700 text-lg font-semibold">

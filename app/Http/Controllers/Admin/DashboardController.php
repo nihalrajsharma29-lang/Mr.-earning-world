@@ -7,6 +7,7 @@ use App\Models\DailyReport;
 use App\Models\Client;
 use App\Models\Customer;
 use App\Models\ReportImportName;
+use App\Models\ReportType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -49,33 +50,28 @@ class DashboardController extends BaseController
     {
         return view('admin.report-import-names', [
             'names' => ReportImportName::values(),
+            'reportTypes' => ReportType::active()->orderBy('name')->get(),
         ]);
     }
 
     public function saveReportImportNames(Request $request)
     {
-        $request->validate([
-            'daily_report' => ['nullable', 'string'],
-            'payment_report' => ['nullable', 'string'],
-            'violation_records' => ['nullable', 'string'],
+        $validated = $request->validate([
+            'report_names' => ['nullable', 'array'],
+            'report_names.*' => ['nullable', 'string', 'max:150'],
+            'daily_report' => ['nullable', 'string', 'max:150'],
+            'payment_report' => ['nullable', 'string', 'max:150'],
+            'violation_records' => ['nullable', 'string', 'max:150'],
         ]);
 
-        $config = [
-            'daily_report' => trim((string) $request->input('daily_report', '4280121896')),
-            'payment_report' => trim((string) $request->input('payment_report', 'Payment Report')),
-            'violation_records' => trim((string) $request->input('violation_records', 'Strike Records')),
-        ];
+        foreach (ReportType::active()->get() as $reportType) {
+            $value = trim((string) ($validated['report_names'][$reportType->slug]
+                ?? $validated[$reportType->slug]
+                ?? ''));
 
-        foreach ($config as $key => $value) {
-            if ($value === '') {
-                $config[$key] = null;
-            }
-        }
-
-        foreach ($config as $key => $value) {
             ReportImportName::updateOrCreate(
-                ['report_type' => $key],
-                ['name' => $value]
+                ['report_type' => $reportType->slug],
+                ['name' => $value !== '' ? $value : null]
             );
         }
 

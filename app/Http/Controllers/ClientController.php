@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 
 class ClientController extends BaseController
@@ -42,7 +43,9 @@ class ClientController extends BaseController
      */
     public function create()
     {
-        return view('admin.clients.create');
+        return view('admin.clients.create', [
+            'inviteUrl' => URL::temporarySignedRoute('client.invite.create', now()->addDays(7)),
+        ]);
     }
 
     /**

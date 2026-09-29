@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\AdminAuditLog;
 use App\Models\ReportColumn;
+use App\Models\ReportType;
 use App\Support\ReportColumnManager;
 use Illuminate\Http\Request;
 
@@ -13,6 +14,7 @@ class ReportColumnController extends BaseController
     {
         return view('admin.report-columns.index', [
             'columnsByType' => ReportColumn::orderBy('report_type')->orderBy('position')->get()->groupBy('report_type'),
+            'reportTypes' => ReportType::active()->orderBy('name')->get(),
         ]);
     }
 
@@ -39,7 +41,9 @@ class ReportColumnController extends BaseController
         $visible = $validated['visible'] ?? [];
         $labels = $validated['labels'] ?? [];
 
-        foreach (ReportColumnManager::all() as $reportType => $columns) {
+        $configuredTypes = ReportColumnManager::configured();
+
+        foreach ($configuredTypes as $reportType => $columns) {
             $visibleKeys = $visible[$reportType] ?? [];
 
             $columns = ReportColumn::where('report_type', $reportType)->orderBy('position')->get()
@@ -60,6 +64,10 @@ class ReportColumnController extends BaseController
         }
 
         foreach ($validated['new_columns'] ?? [] as $reportType => $newColumn) {
+            if (! array_key_exists($reportType, $configuredTypes)) {
+                return back()->withErrors(['new_columns' => 'Select an active report page before adding columns.']);
+            }
+
             if (empty($newColumn['label'])) {
                 continue;
             }

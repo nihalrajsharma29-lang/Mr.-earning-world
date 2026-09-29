@@ -6,8 +6,8 @@
     $isViolationReport = $activeReportType === 'violation_records';
 @endphp
 
-@section('title', $isPaymentReport ? 'Payment Report' : ($isViolationReport ? 'Violation Records' : 'Daily Reports'))
-@section('page-heading', $isPaymentReport ? 'Payment Report' : ($isViolationReport ? 'Violation Records' : 'Daily Reports'))
+@section('title', $reportTypeName)
+@section('page-heading', $reportTypeName)
 
 @push('styles')
 <style>
@@ -104,14 +104,17 @@
     @endif
 
     <div class="page-header">
-        <h1>{{ $isPaymentReport ? '💰 Payment Reports' : ($isViolationReport ? '⚠️ Violation Records' : '📅 Daily Reports') }}</h1>
+        <h1>{{ $reportTypeName }}</h1>
         <p>
             {{
                 $isPaymentReport
                     ? 'Browse payment report data for your hosts and export as needed.'
                     : ($isViolationReport
                         ? 'Search and review violation records submitted for your hosts.'
-                        : 'Browse daily report data for your hosts, filter by date, and search by host name or ID.')
+                        : ($activeReportType === 'daily_report'
+                            ? 'Browse daily report data for your hosts, filter by date, and search by host name or ID.'
+                            : 'Browse ' . $reportTypeName . ' data for your hosts.')
+                    )
             }}
         </p>
     </div>
@@ -123,7 +126,7 @@
         </div>
     @endif
 
-    @unless($isViolationReport)
+    @if($isPaymentReport || $activeReportType === 'daily_report')
     <div class="summary-grid">
         <div class="summary-card">
             <div class="summary-title">{{ $isPaymentReport ? 'Total Host Salary' : 'Total Host' }}</div>
@@ -170,12 +173,12 @@
         </div>
         @endif
     </div>
-    @endunless
+    @endif
 
     <div class="filter-card">
         <div class="page-header" style="margin-bottom: 12px;">
             <h1 style="font-size: 22px; margin-bottom: 6px;">Search Reports</h1>
-            <p style="margin: 0;">Showing: {{ ucwords(str_replace('_', ' ', $activeReportType)) }}</p>
+            <p style="margin: 0;">Showing: {{ $reportTypeName }}</p>
         </div>
 
         <form action="{{ route('client.daily.reports') }}" method="GET" class="filter-form">
@@ -194,7 +197,7 @@
             @endunless
 
             @php
-                $activeColumns = $isPaymentReport ? $paymentReportColumns : ($isViolationReport ? $violationReportColumns : $dailyReportColumns);
+                $activeColumns = $availableColumns;
             @endphp
             <div class="filter-group">
                 <label for="sort_column">Sort column</label>
@@ -221,7 +224,7 @@
 
     <div class="card">
         <div class="table-header">
-            <h3>{{ $isPaymentReport ? 'Host Payment Reports' : ($isViolationReport ? 'Report Results' : 'Host Daily Reports') }}</h3>
+            <h3>{{ $isPaymentReport ? 'Host Payment Reports' : ($isViolationReport ? 'Violation Report Results' : $reportTypeName . ' Results') }}</h3>
             @if($isPaymentReport && $weeklyDate)
                 <div class="client-weekly-date" aria-label="Weekly Date (Mon to Sun)">
                     <span class="client-weekly-date-label">Weekly Date (Mon to Sun):</span>
@@ -361,8 +364,7 @@
             <div class="empty">
                 <div class="empty-icon">📭</div>
                 <h3>No Reports Found</h3>
-                <p>Try adjusting the search filters or import report data.</p>
-                <a href="{{ route('client.daily.import') }}">📥 Import Reports</a>
+                <p>Try adjusting the search filters.</p>
             </div>
         @endif
     </div>

@@ -262,17 +262,11 @@
                     🔍 Host Audit Results
                 </a>
 
-                <a href="{{ route('client.daily.reports', ['report_type' => 'daily_report']) }}" class="{{ request()->routeIs('client.daily.reports') && request('report_type', 'daily_report') === 'daily_report' ? 'active' : '' }}">
-                    📅 Daily Reports
-                </a>
-
-                <a href="{{ route('client.daily.reports', ['report_type' => 'payment_report']) }}" class="{{ request()->routeIs('client.daily.reports') && request('report_type') === 'payment_report' ? 'active' : '' }}">
-                    💰 Payment Report
-                </a>
-
-                <a href="{{ route('client.daily.reports', ['report_type' => 'violation_records']) }}" class="{{ request()->routeIs('client.daily.reports') && request('report_type') === 'violation_records' ? 'active' : '' }}">
-                    ⚠️ Violation Records
-                </a>
+                @foreach(\App\Models\ReportType::active()->orderBy('name')->get() as $reportType)
+                    <a href="{{ route('client.daily.reports', ['report_type' => $reportType->slug]) }}" class="{{ request()->routeIs('client.daily.reports') && request('report_type', 'daily_report') === $reportType->slug ? 'active' : '' }}">
+                        📄 {{ $reportType->name }}
+                    </a>
+                @endforeach
 
                 <div class="menu-title">
                     Account

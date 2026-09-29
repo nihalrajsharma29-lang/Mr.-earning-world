@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Admin\BaseController;
+use App\Exports\HostIdsExport;
 use App\Models\AdminAuditLog;
 use App\Models\Client;
 use App\Models\Customer;
 use App\Models\SkippedImportId;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class HostApprovalController extends BaseController
 {
@@ -35,6 +37,19 @@ class HostApprovalController extends BaseController
     public function index(Request $request)
     {
         $isManager = auth()->user()->role === 'manager';
+        $hosts = $this->hostQuery($request)->paginate(25)->withQueryString();
+        $clients = Client::orderBy('name')->get(['id', 'name']);
+
+        return view($isManager ? 'manager.hosts.index' : 'admin.hosts.index', compact('hosts', 'clients'));
+    }
+
+    public function export(Request $request)
+    {
+        return Excel::download(new HostIdsExport($this->hostQuery($request)), 'host-ids.xlsx');
+    }
+
+    private function hostQuery(Request $request)
+    {
         $query = Customer::with('client')->latest();
 
         if ($request->filled('status')) {
@@ -55,10 +70,7 @@ class HostApprovalController extends BaseController
             });
         }
 
-        $hosts = $query->paginate(25)->withQueryString();
-        $clients = Client::orderBy('name')->get(['id', 'name']);
-
-        return view($isManager ? 'manager.hosts.index' : 'admin.hosts.index', compact('hosts', 'clients'));
+        return $query;
     }
 
     /**

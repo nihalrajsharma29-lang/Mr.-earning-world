@@ -7,6 +7,7 @@ use App\Imports\DailyReportImport;
 use App\Models\AdminAuditLog;
 use App\Models\ReportImportName;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Excel as ExcelReader;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -54,7 +55,7 @@ class DailyReportImportController extends BaseController
             'report_type' => [
                 'required',
                 'string',
-                'in:daily_report,payment_report,violation_records',
+                Rule::exists('report_types', 'slug')->where('is_active', true),
             ],
         ];
 

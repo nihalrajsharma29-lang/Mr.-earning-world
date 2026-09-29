@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Client\BaseController;
 use App\Models\Customer;
+use App\Models\DailyReport;
+use App\Models\ReportType;
 
 class DashboardController extends BaseController
 {
@@ -24,12 +26,21 @@ class DashboardController extends BaseController
                 ->latest()
                 ->get(['customer_id', 'country', 'approval_status', 'created_at'])
             : collect();
+        $reportTypes = ReportType::active()->orderBy('name')->get();
+        $reportCounts = $clientId
+            ? DailyReport::where('client_id', $clientId)
+                ->selectRaw('report_type, count(*) as report_count')
+                ->groupBy('report_type')
+                ->pluck('report_count', 'report_type')
+            : collect();
 
         return view('client.dashboard', compact(
             'totalHosts',
             'pendingHosts',
             'approvedHosts',
-            'hosts'
+            'hosts',
+            'reportTypes',
+            'reportCounts'
         ));
     }
 }

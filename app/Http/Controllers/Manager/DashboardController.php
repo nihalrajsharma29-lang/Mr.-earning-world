@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Manager;
 use App\Http\Controllers\Manager\BaseController;
 use App\Models\DailyReport;
 use App\Models\Customer;
+use App\Models\ReportType;
 use App\Models\SkippedImportId;
 
 class DashboardController extends BaseController
@@ -17,6 +18,11 @@ class DashboardController extends BaseController
         $totalHosts = Customer::count();
         $pendingHosts = Customer::where('approval_status', 'pending')->count();
         $skippedHostIds = SkippedImportId::query()->distinct('host_id')->count('host_id');
+        $reportTypes = ReportType::active()->orderBy('name')->get();
+        $reportCounts = DailyReport::query()
+            ->selectRaw('report_type, count(*) as report_count')
+            ->groupBy('report_type')
+            ->pluck('report_count', 'report_type');
         $dailyReportDates = DailyReport::query()
             ->where('report_type', 'daily_report')
             ->whereNotNull('dt')
@@ -32,7 +38,9 @@ class DashboardController extends BaseController
             'totalHosts',
             'pendingHosts',
             'skippedHostIds',
-            'dailyReportDates'
+            'dailyReportDates',
+            'reportTypes',
+            'reportCounts'
         ));
     }
 }
