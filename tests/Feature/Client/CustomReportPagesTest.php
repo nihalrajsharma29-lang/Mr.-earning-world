@@ -91,6 +91,9 @@ class CustomReportPagesTest extends TestCase
 
         $this->get(route('client.daily.reports', ['report_type' => $reportType->slug]))
             ->assertOk()
+            ->assertSee('Host Report Pages')
+            ->assertSee('<summary>📁 Host Report Pages</summary>', false)
+            ->assertSee('<details class="menu-folder" open>', false)
             ->assertSee('Quality Checks')
             ->assertSee('Quality Score')
             ->assertSee('visible-host')

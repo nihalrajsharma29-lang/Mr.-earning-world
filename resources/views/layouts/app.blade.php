@@ -16,6 +16,10 @@
         .menu-title { padding: 15px 20px 8px; font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; }
         .menu a { display: block; padding: 12px 20px; color: #d1d5db; text-decoration: none; font-size: 14px; }
         .menu a:hover, .menu a.active { background: #1f2937; color: white; }
+        .menu-folder > summary { display: block; padding: 12px 20px; color: #d1d5db; font-size: 14px; cursor: pointer; }
+        .menu-folder > summary:hover, .menu-folder[open] > summary { background: #1f2937; color: white; }
+        .menu-folder-items { margin-left: 18px; border-left: 1px solid #374151; }
+        .menu-folder-items a { padding-left: 16px; }
         .menu .menu-disabled { display: block; padding: 12px 20px; color: #6b7280; font-size: 14px; cursor: not-allowed; }
         .logout-form { margin-top: 10px; }
         .logout-btn { width: 100%; border: none; background: transparent; color: #d1d5db; text-align: left; padding: 12px 20px; font-size: 14px; cursor: pointer; }
@@ -73,9 +77,14 @@
                 <a href="{{ route('clients.index') }}" class="{{ request()->routeIs('clients.*') ? 'active' : '' }}">👥 Clients</a>
                 <a href="{{ route('admin.daily.import') }}" class="{{ request()->routeIs('admin.daily.import*') ? 'active' : '' }}">� Import Reports</a>
                 <a href="{{ route('admin.skipped-import-ids.index') }}" class="{{ request()->routeIs('admin.skipped-import-ids.*') ? 'active' : '' }}">🔎 Skipped Host IDs</a>
-                @foreach(\App\Models\ReportType::active()->get() as $reportType)
-                    <a href="{{ route('admin.reports', ['report_type' => $reportType->slug]) }}" class="{{ request()->routeIs('admin.reports') && request('report_type', 'daily_report') === $reportType->slug ? 'active' : '' }}">📄 {{ $reportType->name }}</a>
-                @endforeach
+                <details class="menu-folder" {{ request()->routeIs('admin.reports') ? 'open' : '' }}>
+                    <summary>📁 Host Report Pages</summary>
+                    <div class="menu-folder-items">
+                        @foreach(\App\Models\ReportType::active()->get() as $reportType)
+                            <a href="{{ route('admin.reports', ['report_type' => $reportType->slug]) }}" class="{{ request()->routeIs('admin.reports') && request('report_type', 'daily_report') === $reportType->slug ? 'active' : '' }}">📄 {{ $reportType->name }}</a>
+                        @endforeach
+                    </div>
+                </details>
                 <a href="{{ route('admin.report-columns.index') }}" class="{{ request()->routeIs('admin.report-columns.*') ? 'active' : '' }}">⚙️ Report Columns</a>
                 <a href="{{ route('admin.bank-details') }}" class="{{ request()->routeIs('admin.bank-details') ? 'active' : '' }}">💳 Bank Card</a>
                 <a href="{{ route('admin.audit') }}" class="{{ request()->routeIs('admin.audit') ? 'active' : '' }}">📝 Audit Log</a>

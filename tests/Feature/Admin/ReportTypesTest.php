@@ -31,6 +31,10 @@ class ReportTypesTest extends TestCase
         $reportType->refresh();
         $this->assertSame('quality_check_report', $reportType->slug);
         $this->assertSame('Quality Audit Report', $reportType->name);
+        $this->get(route('admin.report-types.index'))
+            ->assertOk()
+            ->assertSee('Host Report Pages')
+            ->assertSee('Quality Audit Report');
 
         $this->assertDatabaseHas('report_columns', [
             'report_type' => $reportType->slug,
@@ -57,6 +61,8 @@ class ReportTypesTest extends TestCase
         $this->actingAs($manager)
             ->get(route('manager.reports', ['report_type' => $reportType->slug]))
             ->assertOk()
+            ->assertSee('Host Report Pages')
+            ->assertSee('<details class="menu-folder" open>', false)
             ->assertSee('Quality Audit Report Overview');
 
         $this->actingAs($admin);

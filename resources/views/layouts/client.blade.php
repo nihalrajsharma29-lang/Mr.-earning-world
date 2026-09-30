@@ -83,6 +83,31 @@
             color: white;
         }
 
+        .menu-folder > summary {
+            display: block;
+            padding: 12px 20px;
+            color: #d1d5db;
+            font-size: 14px;
+            cursor: pointer;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        .menu-folder > summary:hover,
+        .menu-folder[open] > summary {
+            background: #1f2937;
+            color: white;
+        }
+
+        .menu-folder-items {
+            margin-left: 18px;
+            border-left: 1px solid #374151;
+        }
+
+        .menu-folder-items a {
+            padding-left: 16px;
+        }
+
         .logout-form {
             margin-top: 20px;
         }
@@ -355,11 +380,16 @@
                     🔍 Host Audit Results
                 </a>
 
-                @foreach(\App\Models\ReportType::active()->orderBy('name')->get() as $reportType)
-                    <a href="{{ route('client.daily.reports', ['report_type' => $reportType->slug]) }}" class="{{ request()->routeIs('client.daily.reports') && request('report_type', 'daily_report') === $reportType->slug ? 'active' : '' }}">
-                        📄 {{ $reportType->name }}
-                    </a>
-                @endforeach
+                <details class="menu-folder" {{ request()->routeIs('client.daily.reports') ? 'open' : '' }}>
+                    <summary>📁 Host Report Pages</summary>
+                    <div class="menu-folder-items">
+                        @foreach(\App\Models\ReportType::active()->orderBy('name')->get() as $reportType)
+                            <a href="{{ route('client.daily.reports', ['report_type' => $reportType->slug]) }}" class="{{ request()->routeIs('client.daily.reports') && request('report_type', 'daily_report') === $reportType->slug ? 'active' : '' }}">
+                                📄 {{ $reportType->name }}
+                            </a>
+                        @endforeach
+                    </div>
+                </details>
 
                 <div class="menu-title">
                     Account
