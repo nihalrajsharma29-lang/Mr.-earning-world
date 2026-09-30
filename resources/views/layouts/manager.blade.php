@@ -9,7 +9,7 @@
         * { box-sizing: border-box; }
         body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #f3f4f6; color: #111827; overflow-x: hidden; }
         .app-shell { display: flex; min-height: 100vh; }
-        .sidebar { width: 250px; min-height: 100vh; background: #111827; color: white; overflow-y: auto; flex-shrink: 0; position: sticky; top: 0; z-index: 20; }
+        .sidebar { position: fixed; left: 0; top: 0; width: 250px; height: 100vh; background: #111827; color: white; overflow-y: auto; flex-shrink: 0; z-index: 20; }
         .logo { padding: 22px 20px; font-size: 22px; font-weight: bold; border-bottom: 1px solid #374151; }
         .logo span { color: #60a5fa; }
         .menu { padding-top: 15px; }
@@ -19,7 +19,7 @@
         .logout-form { margin-top: 10px; }
         .logout-btn { width: 100%; border: none; background: transparent; color: #d1d5db; text-align: left; padding: 12px 20px; font-size: 14px; cursor: pointer; }
         .logout-btn:hover { background: #1f2937; color: white; }
-        .main { flex: 1; min-width: 0; min-height: 100vh; background: #f3f4f6; display: flex; flex-direction: column; }
+        .main { flex: 1; min-width: 0; min-height: 100vh; margin-left: 250px; background: #f3f4f6; display: flex; flex-direction: column; }
         .topbar { min-height: 70px; background: white; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 24px; }
         .topbar-left { display: flex; align-items: center; gap: 12px; }
         .topbar h2 { margin: 0; font-size: 20px; }
@@ -29,7 +29,7 @@
         .sidebar-overlay { display: none; }
         .content { padding: clamp(16px, 3vw, 28px); flex: 1; }
         .content > *:first-child { margin-top: 0; }
-        @media (max-width: 880px) { .sidebar { width: 220px; } .topbar { padding: 0 20px; } }
+        @media (max-width: 880px) { .sidebar { width: 220px; } .main { margin-left: 220px; } .topbar { padding: 0 20px; } }
         @media (max-width: 680px) {
             .app-shell { display: block; }
             .sidebar {

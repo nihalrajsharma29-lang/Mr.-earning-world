@@ -24,8 +24,9 @@ class DashboardController extends BaseController
         $hosts = $clientId
             ? Customer::where('client_id', $clientId)
                 ->latest()
-                ->get(['customer_id', 'country', 'approval_status', 'created_at'])
-            : collect();
+                ->paginate(10, ['customer_id', 'country', 'approval_status', 'created_at'])
+                ->withQueryString()
+            : Customer::whereRaw('1 = 0')->paginate(10, ['customer_id', 'country', 'approval_status', 'created_at']);
         $reportTypes = ReportType::active()->orderBy('name')->get();
         $reportCounts = $clientId
             ? DailyReport::where('client_id', $clientId)

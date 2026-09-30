@@ -244,6 +244,9 @@
                         @endforeach
                     </tbody>
                 </table>
+                <div style="padding: 16px;">
+                    {{ $hosts->links() }}
+                </div>
             @else
                 <div class="empty">
                     <p>No hosts added yet.</p>

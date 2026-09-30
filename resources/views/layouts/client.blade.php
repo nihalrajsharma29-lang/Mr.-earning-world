@@ -25,13 +25,14 @@
 
         .sidebar {
             width: 250px;
-            min-height: 100vh;
+            height: 100vh;
             background: #111827;
             color: white;
             padding: 20px 0;
             overflow-y: auto;
             flex-shrink: 0;
-            position: sticky;
+            position: fixed;
+            left: 0;
             top: 0;
             z-index: 20;
         }
@@ -106,6 +107,7 @@
             flex: 1;
             min-width: 0;
             min-height: 100vh;
+            margin-left: 250px;
             display: flex;
             flex-direction: column;
         }
@@ -172,11 +174,94 @@
             flex: 1;
         }
 
+        .content nav[role="navigation"] {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .content nav[role="navigation"] > div:first-child {
+            display: none;
+        }
+
+        .content nav[role="navigation"] > div:last-child {
+            display: flex;
+            flex: 1 1 100%;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .content nav[role="navigation"] p {
+            margin: 0;
+        }
+
+        .content nav[role="navigation"] > div:last-child > div:last-child > span {
+            display: inline-flex;
+            overflow: hidden;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+        }
+
+        .content nav[role="navigation"] a,
+        .content nav[role="navigation"] span[aria-current="page"] > span,
+        .content nav[role="navigation"] span[aria-disabled="true"] > span {
+            display: inline-flex;
+            min-width: 36px;
+            height: 36px;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10px;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            color: #374151;
+            text-decoration: none;
+        }
+
+        .content nav[role="navigation"] a:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        .content nav[role="navigation"] a:focus-visible {
+            position: relative;
+            z-index: 1;
+            outline: 2px solid #2563eb;
+            outline-offset: 1px;
+        }
+
+        .content nav[role="navigation"] span[aria-current="page"] > span {
+            background: #1f2937;
+            border-color: #1f2937;
+            color: #fff;
+        }
+
+        .content nav[role="navigation"] span[aria-disabled="true"] > span {
+            background: #f9fafb;
+            color: #9ca3af;
+        }
+
+        .content nav[role="navigation"] svg {
+            display: block;
+            width: 20px;
+            height: 20px;
+            flex: none;
+        }
+
         .content > *:first-child {
             margin-top: 0;
         }
 
         @media (max-width: 900px) {
+            .main {
+                margin-left: 210px;
+            }
+
             .sidebar {
                 width: 210px;
             }
@@ -188,7 +273,6 @@
             }
 
             .sidebar {
-                position: fixed;
                 left: 0;
                 top: 0;
                 width: min(86vw, 280px);
@@ -200,6 +284,10 @@
 
             .sidebar.open {
                 transform: translateX(0);
+            }
+
+            .main {
+                margin-left: 0;
             }
 
             .sidebar-overlay {
@@ -228,6 +316,11 @@
 
             .content {
                 padding: 15px;
+            }
+
+            .content nav[role="navigation"] > div:last-child {
+                align-items: flex-start;
+                flex-direction: column;
             }
 
             .profile > div:last-child {
