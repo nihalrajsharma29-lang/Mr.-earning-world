@@ -41,14 +41,19 @@
                             </form>
                             <div class="mt-1 text-sm text-gray-500">{{ $reportType->is_active ? 'Active' : 'Removed' }}{{ $reportType->is_system ? ' · Built-in' : '' }}</div>
                         </div>
-                        @if($reportType->is_active)
-                            <form method="POST" action="{{ route('admin.report-types.destroy', $reportType) }}" onsubmit="return confirm('Remove this report page from navigation? Imported reports and column settings will be preserved.');">
+                        <div class="flex flex-wrap gap-2">
+                            <form method="POST" action="{{ route('admin.report-types.clear-data', $reportType) }}" onsubmit="return confirm('Clear all imported data for this page? This cannot be undone.');">
                                 @csrf
                                 @method('DELETE')
-                                <button class="rounded-md border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">Remove Page</button>
+                                <button class="rounded-md border border-amber-200 px-3 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-50">Clear Data</button>
                             </form>
-                        @else
-                            <div class="flex flex-wrap gap-2">
+                            @if($reportType->is_active)
+                                <form method="POST" action="{{ route('admin.report-types.destroy', $reportType) }}" onsubmit="return confirm('Remove this report page from navigation? Imported reports and column settings will be preserved.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="rounded-md border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">Remove Page</button>
+                                </form>
+                            @else
                                 <form method="POST" action="{{ route('admin.report-types.restore', $reportType) }}">
                                     @csrf
                                     @method('PATCH')
@@ -59,8 +64,8 @@
                                     @method('DELETE')
                                     <button class="rounded-md border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">Permanent Delete</button>
                                 </form>
-                            </div>
-                        @endif
+                            @endif
+                        </div>
                     </div>
                 @endforeach
             </div>

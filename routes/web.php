@@ -293,6 +293,11 @@ Route::middleware('auth')->group(function () {
     )->name('admin.report-types.update');
 
     Route::delete(
+        '/admin/report-types/{reportType}/clear-data',
+        [\App\Http\Controllers\Admin\ReportTypeController::class, 'clearData']
+    )->name('admin.report-types.clear-data');
+
+    Route::delete(
         '/admin/report-types/{reportType}',
         [\App\Http\Controllers\Admin\ReportTypeController::class, 'destroy']
     )->name('admin.report-types.destroy');

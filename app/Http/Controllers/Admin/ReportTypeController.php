@@ -98,6 +98,33 @@ class ReportTypeController extends BaseController
         return redirect()->route('admin.report-types.index')->with('success', 'Report page name updated.');
     }
 
+    public function clearData(ReportType $reportType)
+    {
+        $deleted = DB::transaction(function () use ($reportType): int {
+            $deleted = DailyReport::where('report_type', $reportType->slug)->delete();
+
+            AdminAuditLog::create([
+                'admin_id' => auth()->id(),
+                'action' => 'clear_report_type_data',
+                'details' => sprintf(
+                    '%s cleared %d imported report(s) from %s (%s).',
+                    auth()->user()->name,
+                    $deleted,
+                    $reportType->name,
+                    $reportType->slug
+                ),
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+
+            return $deleted;
+        });
+
+        return redirect()
+            ->route('admin.report-types.index')
+            ->with('success', "Cleared {$deleted} imported report(s) from {$reportType->name}.");
+    }
+
     public function destroy(ReportType $reportType)
     {
         if (! $reportType->is_active) {
