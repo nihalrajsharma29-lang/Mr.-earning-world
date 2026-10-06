@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\User;
+use App\Models\Client;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -33,5 +34,29 @@ class ClientManagementTest extends TestCase
         $response->assertRedirect(route('clients.index', absolute: false));
         $this->assertDatabaseHas('clients', ['email' => 'client@example.com']);
         $this->assertDatabaseHas('users', ['email' => 'client@example.com', 'role' => 'client']);
+    }
+
+    public function test_admin_and_manager_can_see_client_joining_date(): void
+    {
+        $client = Client::create([
+            'name' => 'Joining Date Client',
+            'email' => 'joining@example.com',
+            'phone' => '1234567890',
+        ]);
+        $joiningDate = $client->created_at->format('d M Y');
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin)
+            ->get(route('clients.index', absolute: false))
+            ->assertOk()
+            ->assertSee('Date of Joining')
+            ->assertSee($joiningDate);
+
+        $manager = User::factory()->create(['role' => 'manager']);
+        $this->actingAs($manager)
+            ->get(route('manager.clients.index', absolute: false))
+            ->assertOk()
+            ->assertSee('Date of Joining')
+            ->assertSee($joiningDate);
     }
 }

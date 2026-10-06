@@ -55,6 +55,7 @@
                             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Email</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Phone</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Company</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Date of Joining</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Hosts</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Commission</th>
@@ -68,6 +69,7 @@
                                 <td class="px-4 py-3 text-sm text-gray-700">{{ $client->email }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-700">{{ $client->phone }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-700">{{ $client->company ?? '-' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">{{ $client->created_at?->format('d M Y') ?? '-' }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-700">{{ $client->customers_count ?? 0 }}</td>
                                 <td class="px-4 py-3 text-sm">
                                     @if(($client->status ?? 'Active') === 'Active')
@@ -82,7 +84,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-4 py-10 text-center text-gray-500">
+                                <td colspan="9" class="px-4 py-10 text-center text-gray-500">
                                     @if(!empty($search))
                                         No clients found for "{{ $search }}"
                                     @else

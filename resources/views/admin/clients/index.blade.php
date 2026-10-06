@@ -72,6 +72,7 @@
                 <th class="p-3 text-left">Email</th>
                 <th class="p-3 text-left">Phone</th>
                 <th class="p-3 text-left">Company</th>
+                <th class="p-3 text-left">Date of Joining</th>
                 <th class="p-3 text-left">Hosts</th>
                 <th class="p-3 text-left">Status</th>
                 <th class="p-3 text-left">Commission</th>
@@ -104,6 +105,10 @@
 
                 <td class="p-3">
                     {{ $client->company ?? '-' }}
+                </td>
+
+                <td class="p-3">
+                    {{ $client->created_at?->format('d M Y') ?? '-' }}
                 </td>
 
                 <td class="p-3 font-semibold">
@@ -185,7 +190,7 @@
 
             <tr>
 
-                <td colspan="7" class="text-center p-8 text-gray-500">
+                <td colspan="10" class="text-center p-8 text-gray-500">
 
                     @if(!empty($search))
                         No clients found for "{{ $search }}"
