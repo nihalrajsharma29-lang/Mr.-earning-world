@@ -214,10 +214,21 @@ class DailyReportImport implements
             ) ?? 0
         );
 
+        $transactionId = $this->value($row, [
+            'tradeorderid',
+            'transactionid',
+            'transactionno',
+            'transactionnumber',
+            'paymentid',
+            'orderid',
+        ]);
+        $importKey = $transactionId !== null ? hash('sha256', $transactionId) : '';
+
         $reportAttributes = [
 
                 'client_id' => $customer->client_id,
                 'report_type' => $this->reportType,
+                'import_key' => $importKey,
                 'weekly_date' => $weeklyDate,
 
                 'host_id' => $hostId,
@@ -693,15 +704,34 @@ class DailyReportImport implements
                 'extra_data' => json_encode($row, JSON_THROW_ON_ERROR),
             ];
 
-        DailyReport::upsert(
-            [array_merge([
-                'customer_id' => $customer->id,
-                'dt' => $reportDate,
-                'report_type' => $this->reportType,
-            ], $reportAttributes)],
-            ['customer_id', 'dt', 'report_type'],
-            array_keys($reportAttributes)
-        );
+        DB::transaction(function () use ($customer, $reportDate, $reportAttributes, $importKey): void {
+            $legacyReport = $importKey !== ''
+                ? DailyReport::query()
+                    ->where('customer_id', $customer->id)
+                    ->whereDate('dt', $reportDate)
+                    ->where('report_type', $this->reportType)
+                    ->where('import_key', '')
+                    ->lockForUpdate()
+                    ->first()
+                : null;
+
+            if ($legacyReport) {
+                $legacyReport->update($reportAttributes);
+
+                return;
+            }
+
+            DailyReport::upsert(
+                [array_merge([
+                    'customer_id' => $customer->id,
+                    'dt' => $reportDate,
+                    'report_type' => $this->reportType,
+                    'import_key' => $importKey,
+                ], $reportAttributes)],
+                ['customer_id', 'dt', 'report_type', 'import_key'],
+                array_keys($reportAttributes)
+            );
+        });
 
         $this->importedRows++;
 

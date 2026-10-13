@@ -17,6 +17,7 @@ class DailyReport extends Model
         'dt',
         'weekly_date',
         'report_type',
+        'import_key',
 
         'host_id',
         'group_name',
