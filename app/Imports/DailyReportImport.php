@@ -214,13 +214,7 @@ class DailyReportImport implements
             ) ?? 0
         );
 
-        DailyReport::updateOrCreate(
-            [
-                'customer_id' => $customer->id,
-                'dt' => $reportDate,
-                'report_type' => $this->reportType,
-            ],
-            [
+        $reportAttributes = [
 
                 'client_id' => $customer->client_id,
                 'report_type' => $this->reportType,
@@ -696,8 +690,17 @@ class DailyReportImport implements
                         $row['livetocallratio'] ?? 0
                     ),
 
-                'extra_data' => $row,
-            ]
+                'extra_data' => json_encode($row, JSON_THROW_ON_ERROR),
+            ];
+
+        DailyReport::upsert(
+            [array_merge([
+                'customer_id' => $customer->id,
+                'dt' => $reportDate,
+                'report_type' => $this->reportType,
+            ], $reportAttributes)],
+            ['customer_id', 'dt', 'report_type'],
+            array_keys($reportAttributes)
         );
 
         $this->importedRows++;
